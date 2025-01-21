@@ -23,7 +23,14 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                return redirect(RouteServiceProvider::HOME);
+                // If provider is logged in and trying to access user routes
+                if ($guard === 'provider' && !str_starts_with($request->path(), 'provider')) {
+                    return redirect()->route('provider.dashboard');
+                }
+                // If regular user is logged in
+                if ($guard === 'web' || $guard === null) {
+                    return redirect('/home');
+                }
             }
         }
 

@@ -10106,12 +10106,12 @@ a.text-info:focus {
 }
 
 .text-warning {
-  color: #ff8d72 !important;
+  color: #fcd53f !important;
 }
 
 a.text-warning:hover,
 a.text-warning:focus {
-  color: #ff643f !important;
+  color: #fcd53f !important;
 }
 
 .text-danger {
