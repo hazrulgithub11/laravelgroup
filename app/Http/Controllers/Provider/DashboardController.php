@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Provider;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Notifications\OrderAcceptedNotification;
 
 class DashboardController extends Controller
 {
@@ -34,7 +35,18 @@ class DashboardController extends Controller
         // Update from pending to processing
         if ($order->status === 'pending') {
             $order->update(['status' => 'processing']);
-            return back()->with('success', 'Order accepted successfully!');
+            
+            // Send Telegram notification to user
+            try {
+                $order->user->notify(new OrderAcceptedNotification($order));
+                return back()->with('success', 'Order accepted and customer notified successfully!');
+            } catch (\Exception $e) {
+                // Order updated but notification failed
+                return back()->with([
+                    'success' => 'Order accepted successfully!',
+                    'warning' => 'Could not send notification to customer.'
+                ]);
+            }
         }
 
         return back()->with('error', 'Invalid order status update');
