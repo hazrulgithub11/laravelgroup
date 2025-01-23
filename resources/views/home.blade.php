@@ -16,7 +16,8 @@
     <div class="row">
         @foreach($providers as $provider)
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card border-left-primary shadow h-100 py-2 hover-card" 
+                 onclick="window.location.href='{{ route('orders.create', ['provider_id' => $provider->id]) }}'">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -41,6 +42,18 @@
         @endforeach
     </div>
 </div>
+
+<style>
+.hover-card {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+</style>
 @endsection
 
 @push('scripts')

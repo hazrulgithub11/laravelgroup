@@ -49,9 +49,13 @@ Route::middleware('auth')->group(function () {
         ->name('location.store')
         ->middleware('auth');
 
-    // Orders routes
+    // Orders routes - Note the order!
+    Route::get('/orders/create', [OrderController::class, 'create'])->name('orders.create');
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+    Route::get('/orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
+    Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
+    Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
 });
 
 // Add this route to test the master layout
@@ -72,6 +76,8 @@ Route::prefix('provider')->name('provider.')->group(function () {
     // Authenticated provider routes
     Route::middleware('auth:provider')->group(function () {
         Route::get('/dashboard', [ProviderDashboardController::class, 'index'])->name('dashboard');
+        Route::put('/orders/{order}/update', [ProviderDashboardController::class, 'updateOrderStatus'])->name('orders.update');
+        Route::put('/orders/{order}/complete', [ProviderDashboardController::class, 'completeOrder'])->name('orders.complete');
         Route::post('/logout', [ProviderController::class, 'logout'])->name('logout');
     });
 });
