@@ -10,6 +10,7 @@ use App\Http\Controllers\Provider\DashboardController as ProviderDashboardContro
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use App\Http\Controllers\OrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,6 +48,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/save-location', [LocationController::class, 'store'])
         ->name('location.store')
         ->middleware('auth');
+
+    // Orders routes
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 });
 
 // Add this route to test the master layout

@@ -15,8 +15,8 @@
                     <p>Dashboard</p>
                 </a>
             </li>
-            <li class="{{ Request::is('home') ? 'active' : '' }}">
-                <a href="{{ route('home') }}">
+            <li class="{{ Request::is('orders*') ? 'active' : '' }}">
+                <a href="{{ route('orders.index') }}">
                     <i class="tim-icons icon-delivery-fast"></i>
                     <p>My Orders</p>
                 </a>

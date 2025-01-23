@@ -54,10 +54,28 @@ class HomeController extends Controller
 
         session([
             'user_latitude' => $request->latitude,
-            'user_longitude' => $request->longitude
+            'user_longitude' => $request->longitude,
+            'location_updated_at' => now()->toDateTimeString()
         ]);
 
-        return response()->json(['success' => true]);
+        // Calculate distances for all providers
+        $providers = Provider::all();
+        $distances = [];
+        
+        foreach ($providers as $provider) {
+            $distance = $this->calculateDistance(
+                $request->latitude,
+                $request->longitude,
+                $provider->latitude,
+                $provider->longitude
+            );
+            $distances[$provider->id] = $distance;
+        }
+
+        return response()->json([
+            'success' => true,
+            'distances' => $distances
+        ]);
     }
 
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)

@@ -25,11 +25,13 @@
                             </div>
                             <div class="h5 mb-0 font-weight-bold" style="color: yellow">🌟🌟🌟🌟🌟</div>
                             <div class="h3 mb-0 font-weight-bold" style="color: #fcd53f">
-                                @if(session('user_latitude') && session('user_longitude'))
-                                    {{ $provider->distance }} km away
-                                @else
-                                    <span class="text-warning">Click Update Location to see distance</span>
-                                @endif
+                                <span id="distance-{{ $provider->id }}">
+                                    @if(session('user_latitude') && session('user_longitude'))
+                                        {{ $provider->distance }} km away
+                                    @else
+                                        <span class="text-warning">Click Update Location to see distance</span>
+                                    @endif
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -78,8 +80,15 @@ function updateLocation() {
             .then(data => {
                 console.log('Server response:', data);
                 if (data.success) {
-                    alert('Location updated successfully!');
-                    location.reload();
+                    // Update distances without page reload
+                    Object.keys(data.distances).forEach(providerId => {
+                        const distanceElement = document.getElementById(`distance-${providerId}`);
+                        if (distanceElement) {
+                            distanceElement.textContent = `${data.distances[providerId]} km away`;
+                        }
+                    });
+                } else {
+                    alert('Error updating location');
                 }
             })
             .catch(error => {
