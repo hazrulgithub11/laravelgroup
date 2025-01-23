@@ -1,15 +1,15 @@
 @extends('layouts.app', ['class' => 'login-page', 'page' => __('Provider Login'), 'contentClass' => 'login-page'])
 
 @section('content')
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-4 col-md-6">
-            <form class="form" method="post" action="{{ route('provider.login.submit') }}">
-                @csrf
-                <div class="card" style="background: #27293d;">
-                    <div class="card-header text-center py-3" style="background: linear-gradient(to bottom right, #e14eca, #ba54f5);">
-                        <h3 class="card-title text-white mb-0">{{ __('Provider Login') }}</h3>
-                    </div>
+<div class="container-fluid" style="width: 100vw; height: 100vh; background-color: #1e1e2f; display: flex; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;">
+    <div class="row justify-content-center" style="width: 80%">
+        <div class="col-md-7">
+            <div class="card" style="background: #27293d;">
+                <div class="card-header text-center py-3" style="background: linear-gradient(to bottom right, #e14eca, #ba54f5);">
+                    <h3 class="card-title text-white mb-0">{{ __('Provider Login') }}</h3>
+                </div>
+                <form class="form" method="post" action="{{ route('provider.login.submit') }}">
+                    @csrf
                     <div class="card-body px-4 py-4">
                         @if ($errors->has('email'))
                             <div class="alert alert-danger mb-4">
@@ -18,21 +18,11 @@
                         @endif
                         
                         <div class="input-group mb-4">
-                            <div class="input-group-prepend">
-                                <div class="input-group-text" style="background: linear-gradient(to bottom right, #e14eca, #ba54f5);">
-                                    <i class="tim-icons icon-email-85 text-white"></i>
-                                </div>
-                            </div>
-                            <input type="email" name="email" class="form-control" placeholder="Email" 
+                            <input type="email" name="email" class="form-control" placeholder="Email"
                                    style="background: #2b3553; border: 1px solid #e14eca; color: white;">
                         </div>
 
                         <div class="input-group mb-4">
-                            <div class="input-group-prepend">
-                                <div class="input-group-text" style="background: linear-gradient(to bottom right, #e14eca, #ba54f5);">
-                                    <i class="tim-icons icon-lock-circle text-white"></i>
-                                </div>
-                            </div>
                             <input type="password" name="password" class="form-control" placeholder="Password"
                                    style="background: #2b3553; border: 1px solid #e14eca; color: white;">
                         </div>
@@ -44,39 +34,70 @@
                             </label>
                         </div>
 
-                        <button type="submit" class="btn btn-lg btn-block mb-4" 
+                        <button type="submit" class="btn btn-lg btn-block mb-4"
                                 style="background: linear-gradient(to bottom right, #e14eca, #ba54f5); color: white;">
                             {{ __('Login') }}
                         </button>
 
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-center">
                             <a href="{{ route('provider.register') }}" style="color: #e14eca;">
                                 {{ __('Create Account') }}
                             </a>
+                            <span class="mx-2 text-white">|</span>
                             <a href="{{ route('password.request') }}" style="color: #e14eca;">
                                 {{ __('Forgot Password?') }}
                             </a>
                         </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    height: 100vh !important;
+    background: #1e1e2f !important;
+    position: fixed !important;
+    width: 100% !important;
+}
+
+.navbar, .navbar-brand, footer, .footer {
+    display: none !important;
+}
+
+.container-fluid {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.main-panel, .content {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #1e1e2f !important;
+}
+
+.wrapper {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    overflow: hidden !important;
+    background: #1e1e2f !important;
+}
+
+* {
+    margin-bottom: 0 !important;
+}
+
 .form-control {
     height: 45px;
     font-size: 1rem;
-}
-
-.input-group-text {
-    width: 45px;
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
 }
 
 .form-control:focus {
@@ -104,10 +125,6 @@
 
 .btn:hover {
     opacity: 0.9;
-}
-
-body {
-    background: #1e1e2f;
 }
 
 .form-check-sign {

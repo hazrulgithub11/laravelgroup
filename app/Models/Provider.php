@@ -14,6 +14,7 @@ class Provider extends Authenticatable
         'email',
         'password',
         'phone',
+        'telegram_username',
         'address',
         'latitude',
         'longitude',

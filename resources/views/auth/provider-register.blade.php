@@ -36,6 +36,14 @@
                         </div>
 
                         <div class="input-group mb-4">
+                            <input type="text" name="telegram_username" 
+                                   class="form-control" 
+                                   placeholder="Telegram Username (e.g. @username)" 
+                                   required
+                                   style="background: #2b3553; border: 1px solid #e14eca; color: white;">
+                        </div>
+
+                        <div class="input-group mb-4">
                             <textarea name="address" id="address" class="form-control" placeholder="Your address will appear here after getting location" 
                                       required rows="3" readonly style="background: #2b3553; border: 1px solid #e14eca; color: white;"></textarea>
                         </div>
