@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
 {
@@ -52,6 +53,7 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'telegram_username' => ['required', 'string', 'max:255'],
         ]);
     }
 
@@ -63,10 +65,25 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        return User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-        ]);
+        // Log the incoming data
+        Log::info('User registration data:', $data);
+
+        try {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+                'telegram_username' => $data['telegram_username'],
+            ]);
+
+            // Log the created user
+            Log::info('Created user:', $user->toArray());
+
+            return $user;
+
+        } catch (\Exception $e) {
+            Log::error('User registration error: ' . $e->getMessage());
+            throw $e;
+        }
     }
 }

@@ -11,6 +11,7 @@ use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\Auth\ProviderRegisterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -85,5 +86,7 @@ Route::prefix('provider')->name('provider.')->group(function () {
 Route::post('/store-location', [App\Http\Controllers\HomeController::class, 'storeLocation'])
     ->name('store.location')
     ->middleware('auth');
+
+Route::post('/provider/register', [ProviderRegisterController::class, 'register'])->name('provider.register');
 
 
