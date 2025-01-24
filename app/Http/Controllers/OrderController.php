@@ -68,6 +68,7 @@ class OrderController extends Controller
             'pickup_time' => 'required|date|after:now',
             'delivery_time' => 'required|date|after:pickup_time|after:24_hours_from_pickup',
             'delivery_charge' => 'required|numeric|min:0',
+            'telegram_username' => 'required|string|max:255',
         ], [
             'delivery_time.after' => 'Delivery time must be at least 24 hours after pickup time'
         ]);
@@ -158,6 +159,7 @@ class OrderController extends Controller
             'pickup_time' => 'required|date|after:now',
             'delivery_time' => 'required|date|after:pickup_time|after:24_hours_from_pickup',
             'delivery_charge' => 'required|numeric|min:0',
+            'telegram_username' => 'required|string|max:255',
         ]);
 
         // Ensure at least one service is selected
@@ -181,6 +183,7 @@ class OrderController extends Controller
             'pickup_time' => $validated['pickup_time'],
             'delivery_time' => $validated['delivery_time'],
             'delivery_charge' => $validated['delivery_charge'],
+            'telegram_username' => $validated['telegram_username'],
         ]);
 
         return redirect()
