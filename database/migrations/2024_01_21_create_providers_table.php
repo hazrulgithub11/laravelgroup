@@ -9,7 +9,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('providers', function (Blueprint $table) {
-            $table->id();
+            $table->id();  // This creates an auto-incrementing primary key
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
@@ -17,6 +17,7 @@ return new class extends Migration
             $table->text('address');
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
+            $table->string('telegram_username');
             $table->rememberToken();
             $table->timestamps();
         });
@@ -26,4 +27,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('providers');
     }
-}; 
+};

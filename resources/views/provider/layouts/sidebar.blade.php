@@ -22,7 +22,7 @@
                 </a>
             </li>
             <li class="{{ Request::is('provider/profile*') ? 'active' : '' }}">
-                <a href="#">
+                <a href="{{ route('provider.profile.edit') }}">
                     <i class="tim-icons icon-single-02"></i>
                     <p>My Profile</p>
                 </a>

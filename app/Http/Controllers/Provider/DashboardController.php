@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Notifications\OrderAcceptedNotification;
+use Illuminate\Support\Facades\Http;
 
 class DashboardController extends Controller
 {
@@ -66,5 +67,43 @@ class DashboardController extends Controller
         }
 
         return back()->with('error', 'Invalid order status update');
+    }
+
+    public function profile()
+    {
+        return view('provider.profile');
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $provider = auth()->guard('provider')->user();
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:providers,email,' . $provider->id,
+            'phone' => 'required|string',
+            'telegram_username' => 'required|string',
+            'telegram_chat_id' => 'required|string',
+            'address' => 'required|string',
+        ]);
+
+        $provider->update($validated);
+
+        // Test the Telegram notification
+        try {
+            Http::post('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/sendMessage', [
+                'chat_id' => $validated['telegram_chat_id'],
+                'text' => "✅ Your Telegram notifications are now set up correctly!\n\nYou will receive notifications here when new orders are placed.",
+                'parse_mode' => 'Markdown'
+            ]);
+            
+            return redirect()
+                ->route('provider.profile')
+                ->with('success', 'Profile updated successfully! A test notification has been sent to your Telegram.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('provider.profile')
+                ->with('success', 'Profile updated but failed to send test notification. Please verify your Telegram Chat ID.');
+        }
     }
 } 

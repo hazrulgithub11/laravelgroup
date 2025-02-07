@@ -51,6 +51,8 @@ class ProviderController extends Controller
             'address' => 'required|string',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
+            'service' => 'required|in:laundry,gardener,cleaning',
+            'categories' => 'required|array|min:1'
         ]);
 
         $provider = Provider::create([
@@ -61,6 +63,8 @@ class ProviderController extends Controller
             'address' => $request->address,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
+            'service' => $request->service,
+            'categories' => $request->categories
         ]);
 
         Auth::guard('provider')->login($provider);

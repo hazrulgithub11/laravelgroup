@@ -13,12 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('telegram_username')->nullable()->after('email');
-        });
-
         Schema::table('providers', function (Blueprint $table) {
-            $table->string('telegram_username')->nullable()->after('email');
+            $table->string('profile_picture')->nullable();
+            $table->text('introduction')->nullable();
+            $table->integer('years_experience')->nullable();
+            $table->json('payment_methods')->nullable();
         });
     }
 
@@ -29,12 +28,8 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('telegram_username');
-        });
-
         Schema::table('providers', function (Blueprint $table) {
-            $table->dropColumn('telegram_username');
+            $table->dropColumn(['profile_picture', 'introduction', 'years_experience', 'payment_methods']);
         });
     }
 };

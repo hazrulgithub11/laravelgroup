@@ -2,58 +2,363 @@
 
 @section('title', 'Dashboard')
 
-@section('content')
-<div class="container-fluid">
-    <!-- Page Heading -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h1 mb-0 text-primary font-weight-bold">ORDER NOW</h1>
-        <button onclick="updateLocation()" class="btn btn-primary">
-            <i class="tim-icons icon-pin"></i> Update My Location
-        </button>
-    </div>
+@push('css')
+<style>
+/* Override dark theme with white background */
+body, 
+.wrapper,
+.main-panel,
+.content {
+    background: #ffffff !important;
+    color: #2f3033 !important;
+}
 
-    <!-- Content Row -->
-    <div class="row">
-        @foreach($providers as $provider)
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2 hover-card" 
-                 onclick="window.location.href='{{ route('orders.create', ['provider_id' => $provider->id]) }}'">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="h2 font-weight-bold text-success text-uppercase mb-5">
-                                {{ $provider->name }}
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold" style="color: yellow">🌟🌟🌟🌟🌟</div>
-                            <div class="h3 mb-0 font-weight-bold" style="color: #fcd53f">
-                                <span id="distance-{{ $provider->id }}">
-                                    @if(session('user_latitude') && session('user_longitude'))
-                                        {{ $provider->distance }} km away
-                                    @else
-                                        <span class="text-warning">Click Update Location to see distance</span>
-                                    @endif
-                                </span>
-                            </div>
+/* Make Dashboard title black */
+.navbar-brand,
+.navbar .navbar-brand,
+.navbar h4,
+.card h4,
+.card-title {
+    color: #000000 !important;  /* Pure black */
+    /* OR */
+    /* color: #2f3033 !important; */  /* Soft black */
+}
+
+/* Style for the page wrapper */
+.page-wrapper {
+    background: #ffffff;
+    min-height: 100vh;
+    padding: 4rem 0;
+    position: relative;
+}
+
+/* Make all headings black */
+h1, h2, h3, h4, h5, h6 {
+    color: #000000 !important;
+}
+
+/* Style for cards */
+.service-card {
+    background: #ffffff;
+    border: 1px solid #e8e8e8;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Override any dark theme text colors */
+.text-muted {
+    color: #666666 !important;
+}
+
+/* Override sidebar color if needed */
+.sidebar {
+    background: #1E856D !important;
+}
+
+/* Override navbar color if needed */
+.navbar {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+/* Add these styles to make checkboxes clickable and visible */
+.form-check-input {
+    cursor: pointer;
+    opacity: 1;
+    position: static;
+    margin-right: 8px;
+}
+
+.form-check-label {
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Style the filter card */
+.filters-group {
+    margin-bottom: 1rem;
+}
+
+.form-check {
+    padding-left: 0;
+    margin-bottom: 0.5rem;
+}
+
+/* Make sure checkboxes are visible and properly sized */
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    position: relative;
+    top: 2px;
+}
+</style>
+@endpush
+
+@section('content')
+<!-- Add a wrapper div for the background -->
+<div class="page-wrapper">
+    <div class="container-fluid">
+        <!-- Page Heading -->
+        <div class="text-center mb-5">
+            <h1 class="h1 mb-2 font-weight-bold" style="color: #2f3033;">Book trusted help</h1>
+            <p class="text-muted" style="font-size: 1.2rem;">for home tasks</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="What do you need help with?" 
+                           style="height: 50px; border-radius: 4px 0 0 4px; border: 1px solid #ddd;">
+                    <div class="input-group-append">
+                        <button class="btn" type="button" 
+                                style="background: #1E856D; color: white; padding: 0 1.5rem; border-radius: 0 4px 4px 0;">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services Section -->
+        <div class="mb-4">
+            <h5 class="mb-4" style="color: #666;">Explore more projects.</h5>
+            <div class="row">
+                <!-- Laundry Service -->
+                <div class="col-md-4 mb-4">
+                    <div class="card service-card" onclick="showProviders('laundry')">
+                        <img src="/images/washing.jpg" class="card-img-top" alt="Laundry Service"
+                             style="height: 200px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title mb-0" style="color: black; font-weight: bold;">Laundry Service 🧺</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gardening Service -->
+                <div class="col-md-4 mb-4">
+                    <div class="card service-card" onclick="showProviders('gardening')">
+                        <img src="/images/gardening.jpg" class="card-img-top" alt="Gardening Service"
+                             style="height: 200px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title mb-0" style="color: black; font-weight: bold;">Garden Upkeep 🌿</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cleaning Service -->
+                <div class="col-md-4 mb-4">
+                    <div class="card service-card" onclick="showProviders('cleaning')">
+                        <img src="/images/cleaning.jpg" class="card-img-top" alt="Cleaning Service"
+                             style="height: 200px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title mb-0" style="color: black; font-weight: bold;">Healthy at Home 🧹</h5>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        @endforeach
+
+        <!-- Add this div for showing providers -->
+        <div id="providersSection" class="row mt-4" style="display: none;">
+            <!-- Filter Section -->
+            <div class="col-12 mb-4">
+                <h5 class="mb-3">Filter Services</h5>
+                
+                <!-- Laundry Categories -->
+                <div id="laundryFilters" class="filters-group" style="display: none;">
+                    <div class="d-flex flex-wrap gap-2">
+                        <div class="filter-option">
+                            <input type="checkbox" id="filterWashing" value="washing_drying" class="filter-checkbox">
+                            <label for="filterWashing" class="filter-label">Washing & Drying</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filterIroning" value="ironing_folding" class="filter-checkbox">
+                            <label for="filterIroning" class="filter-label">Ironing & Folding</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filterDryCleaning" value="dry_cleaning" class="filter-checkbox">
+                            <label for="filterDryCleaning" class="filter-label">Dry Cleaning</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filterExpress" value="express_laundry" class="filter-checkbox">
+                            <label for="filterExpress" class="filter-label">Express Laundry</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gardening Categories -->
+                <div id="gardeningFilters" class="filters-group" style="display: none;">
+                    <div class="d-flex flex-wrap gap-2">
+                        <div class="filter-option">
+                            <input type="checkbox" id="filterLawn" value="lawn_mowing" class="filter-checkbox">
+                            <label for="filterLawn" class="filter-label">Lawn Mowing</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filterPlant" value="plant_care" class="filter-checkbox">
+                            <label for="filterPlant" class="filter-label">Plant Care & Watering</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filterWeeding" value="weeding" class="filter-checkbox">
+                            <label for="filterWeeding" class="filter-label">Weeding & Pruning</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filterCleanup" value="garden_cleanup" class="filter-checkbox">
+                            <label for="filterCleanup" class="filter-label">Garden Cleanup</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cleaning Categories -->
+                <div id="cleaningFilters" class="filters-group" style="display: none;">
+                    <div class="d-flex flex-wrap gap-2">
+                        <div class="filter-option">
+                            <input type="checkbox" id="filterHouse" value="house_cleaning" class="filter-checkbox">
+                            <label for="filterHouse" class="filter-label">House Cleaning</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filterOffice" value="office_cleaning" class="filter-checkbox">
+                            <label for="filterOffice" class="filter-label">Office & Commercial Cleaning</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filterDeep" value="deep_cleaning" class="filter-checkbox">
+                            <label for="filterDeep" class="filter-label">Deep Cleaning</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filterMove" value="move_cleaning" class="filter-checkbox">
+                            <label for="filterMove" class="filter-label">Move-In/Move-Out Cleaning</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Providers List -->
+            <div class="col-12">
+                <div id="providersList" class="row">
+                    <!-- Providers will be loaded here -->
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <style>
-.hover-card {
-    cursor: pointer;
-    transition: transform 0.2s;
+/* Add background styles */
+.page-wrapper {
+    background-image: url('/images/background.jpg');  /* Replace with your image path */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    padding: 4rem 0;
+    position: relative;
 }
 
-.hover-card:hover {
+/* Add overlay to make content more readable */
+.page-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0); /* White overlay with 90% opacity */
+    z-index: 0;
+}
+
+/* Make sure content stays above overlay */
+.container-fluid {
+    position: relative;
+    z-index: 1;
+}
+
+/* Your existing styles */
+.service-card {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: none;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white; /* Add white background to cards */
+}
+
+.service-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
+
+.card-title {
+    color: #2f3033;
+    font-weight: 500;
+}
+
+.form-control {
+    background: white; /* Ensure input has white background */
+}
+
+.form-control:focus {
+    border-color: #1E856D;
+    box-shadow: none;
+}
+
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 1rem;
+    }
+    
+    .h1 {
+        font-size: 2rem;
+    }
+
+    .page-wrapper {
+        padding: 2rem 0;
+    }
+}
+
+/* Style for filter options */
+.filter-option {
+    position: relative;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.filter-checkbox {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.filter-label {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    color: #495057;
+    transition: all 0.2s ease;
+}
+
+.filter-checkbox:checked + .filter-label {
+    background-color: #1E856D;
+    color: white;
+    border-color: #1E856D;
+}
+
+.filter-label:hover {
+    background-color: #e9ecef;
+}
+
+.filter-checkbox:checked + .filter-label:hover {
+    background-color: #166c58;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
 </style>
+
 @endsection
 
 @push('scripts')
@@ -130,5 +435,134 @@ function updateLocation() {
         }
     );
 }
+
+function showProviders(serviceType) {
+    const providersSection = document.getElementById('providersSection');
+    const providersList = document.getElementById('providersList');
+    
+    // Show/hide appropriate filter groups
+    document.querySelectorAll('.filters-group').forEach(group => {
+        group.style.display = 'none';
+    });
+    const filterGroup = document.getElementById(`${serviceType}Filters`);
+    if (filterGroup) {
+        filterGroup.style.display = 'block';
+    }
+    
+    providersSection.style.display = 'block';
+    providersList.innerHTML = '<div class="col-12 text-center">Loading...</div>';
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const userLat = position.coords.latitude;
+            const userLong = position.coords.longitude;
+
+            fetch(`/api/providers/${serviceType}?latitude=${userLat}&longitude=${userLong}`)
+                .then(response => response.json())
+                .then(providers => {
+                    // Add this debug log
+                    console.log('API Response:', providers);
+                    
+                    providersList.innerHTML = '';
+                    
+                    if (!Array.isArray(providers) || providers.length === 0) {
+                        providersList.innerHTML = '<div class="col-12 text-center">No providers available for this service.</div>';
+                        return;
+                    }
+
+                    providers.forEach(provider => {
+                        console.log('Raw provider categories:', provider.categories); // Debug log
+                        
+                        // Parse categories if it's a string
+                        let categories = [];
+                        if (typeof provider.categories === 'string') {
+                            try {
+                                categories = JSON.parse(provider.categories);
+                            } catch (e) {
+                                console.error('Error parsing categories:', e);
+                            }
+                        } else if (Array.isArray(provider.categories)) {
+                            categories = provider.categories;
+                        }
+                        
+                        console.log('Parsed categories:', categories); // Debug log
+
+                        const providerCard = `
+                            <div class="col-md-4 mb-4 provider-container">
+                                <div class="card provider-card" 
+                                     data-categories='${JSON.stringify(categories)}'
+                                     style="background-color: white; min-height: 200px; width: 300px; margin: auto;">
+                                    <div class="card-body" style="padding: 2rem;">
+                                        <h5 class="card-title">${provider.name || 'Unknown Provider'}</h5>
+                                        <p class="card-text">
+                                            <small class="text-muted">Distance: ${provider.distance}</small>
+                                        </p>
+                                        <p class="card-text">
+                                            <small class="text-muted">Services: ${categories.join(', ')}</small>
+                                        </p>
+                                        <a href="/provider/${provider.id}/profile" 
+                                           class="btn btn-dark" 
+                                           style="background-color: black; border-color: black; width: 100%;">
+                                            View Profile
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        providersList.innerHTML += providerCard;
+                    });
+
+                    // Initial filter application
+                    applyFilters();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    providersList.innerHTML = '<div class="col-12 text-center text-danger">Error loading providers. Please try again.</div>';
+                });
+        },
+        function(error) {
+            console.error("Error getting location:", error);
+            providersList.innerHTML = '<div class="col-12 text-center text-warning">Please enable location services to see provider distances.</div>';
+        }
+    );
+}
+
+function applyFilters() {
+    const selectedFilters = Array.from(document.querySelectorAll('.filters-group:not([style*="display: none"]) .filter-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+    
+    console.log('Selected filters:', selectedFilters);
+
+    document.querySelectorAll('.provider-container').forEach(container => {
+        const card = container.querySelector('.provider-card');
+        let providerCategories = [];
+        
+        try {
+            providerCategories = JSON.parse(card.dataset.categories);
+            console.log('Provider categories from card:', providerCategories);
+        } catch (e) {
+            console.error('Error parsing provider categories:', e);
+        }
+
+        // Changed the logic here:
+        // Show all providers if no filters are selected
+        // Otherwise, only show if the provider has ALL selected filters
+        const shouldShow = selectedFilters.length === 0 || 
+            selectedFilters.every(filter => providerCategories.includes(filter));
+        
+        console.log('Provider categories:', providerCategories);
+        console.log('Should show provider:', shouldShow);
+        
+        container.style.display = shouldShow ? 'block' : 'none';
+    });
+}
+
+// Add event listeners when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    const filterCheckboxes = document.querySelectorAll('.filter-checkbox');
+    filterCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', applyFilters);
+    });
+});
 </script>
 @endpush

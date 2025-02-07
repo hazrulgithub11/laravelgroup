@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Provider;
+use App\Notifications\NewOrderNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class OrderController extends Controller
 {
@@ -68,7 +70,6 @@ class OrderController extends Controller
             'pickup_time' => 'required|date|after:now',
             'delivery_time' => 'required|date|after:pickup_time|after:24_hours_from_pickup',
             'delivery_charge' => 'required|numeric|min:0',
-            'telegram_username' => 'required|string|max:255',
         ], [
             'delivery_time.after' => 'Delivery time must be at least 24 hours after pickup time'
         ]);
@@ -98,10 +99,80 @@ class OrderController extends Controller
             'delivery_time' => $validated['delivery_time'],
             'delivery_charge' => $validated['delivery_charge'],
         ]);
-        
-        return redirect()
-            ->route('orders.index')
-            ->with('success', 'Order created successfully!');
+
+        // Send Telegram notification to provider
+        try {
+            $provider = Provider::findOrFail($validated['provider_id']);
+            
+            // Debug log to see provider details
+            \Log::info('Attempting to send notification to provider:', [
+                'provider_id' => $provider->id,
+                'telegram_chat_id' => $provider->telegram_chat_id
+            ]);
+            
+            // Check if provider has a telegram chat ID
+            if (!$provider->telegram_chat_id) {
+                \Log::warning("Provider #{$provider->id} has no Telegram chat ID configured.");
+                return redirect()
+                    ->route('orders.index')
+                    ->with('success', 'Order created successfully!')
+                    ->with('warning', 'Provider notification could not be sent (No Telegram chat ID configured).');
+            }
+
+            // Try to send notification
+            try {
+                // Send direct Telegram message
+                $response = Http::post('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/sendMessage', [
+                    'chat_id' => $provider->telegram_chat_id,
+                    'text' => "🔔 *New Order #" . $order->id . "*\n\n" .
+                             "📦 Services: " . implode(', ', array_filter([
+                                 $order->washing ? 'Washing' : null,
+                                 $order->ironing ? 'Ironing' : null,
+                                 $order->dry_cleaning ? 'Dry Cleaning' : null
+                             ])) . "\n" .
+                             "📅 Pickup: " . $order->pickup_time->format('d M Y h:i A') . "\n" .
+                             "🚚 Delivery: " . $order->delivery_time->format('d M Y h:i A') . "\n" .
+                             "💰 Total: RM " . number_format($order->total, 2) . "\n" .
+                             "📍 Address: " . $order->address . "\n\n" .
+                             "Please login to your dashboard to accept this order.",
+                    'parse_mode' => 'Markdown'
+                ]);
+
+                if ($response->successful() && ($response->json()['ok'] ?? false)) {
+                    \Log::info('Successfully sent notification to provider', [
+                        'provider_id' => $provider->id,
+                        'order_id' => $order->id
+                    ]);
+                    return redirect()
+                        ->route('orders.index')
+                        ->with('success', 'Order created successfully! Provider has been notified.');
+                } else {
+                    throw new \Exception($response->body());
+                }
+            } catch (\Exception $e) {
+                // Log the specific Telegram error
+                \Log::error('Telegram notification failed:', [
+                    'error' => $e->getMessage(),
+                    'provider_id' => $provider->id,
+                    'telegram_chat_id' => $provider->telegram_chat_id
+                ]);
+                return redirect()
+                    ->route('orders.index')
+                    ->with('success', 'Order created successfully!')
+                    ->with('warning', "Couldn't send notification to provider. They will see the order in their dashboard.");
+            }
+        } catch (\Exception $e) {
+            // Log any other errors but don't stop the order creation
+            \Log::error('Failed to send Telegram notification:', [
+                'error' => $e->getMessage(),
+                'error_class' => get_class($e),
+                'stack_trace' => $e->getTraceAsString()
+            ]);
+            return redirect()
+                ->route('orders.index')
+                ->with('success', 'Order created successfully!')
+                ->with('warning', 'Could not send notification to provider.');
+        }
     }
 
     /**

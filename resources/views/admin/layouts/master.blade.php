@@ -19,12 +19,18 @@
 
     <!-- Add any additional CSS -->
     @stack('css')
+
 </head>
 
 <body>
     <div class="wrapper">
         <!-- Sidebar -->
-        @include('admin.layouts.sidebar')
+        <div class="sidebar">
+            <div id="sidebarToggle">
+                <i class="fas fa-chevron-left"></i>
+            </div>
+            @include('admin.layouts.sidebar')
+        </div>
         
         <div class="main-panel">
             <!-- Navbar -->

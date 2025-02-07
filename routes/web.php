@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Auth\ProviderRegisterController;
+use Illuminate\Support\Facades\Http;
+use App\Http\Controllers\Provider\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -77,6 +79,8 @@ Route::prefix('provider')->name('provider.')->group(function () {
     // Authenticated provider routes
     Route::middleware('auth:provider')->group(function () {
         Route::get('/dashboard', [ProviderDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('/orders/{order}/update', [ProviderDashboardController::class, 'updateOrderStatus'])->name('orders.update');
         Route::put('/orders/{order}/complete', [ProviderDashboardController::class, 'completeOrder'])->name('orders.complete');
         Route::post('/logout', [ProviderController::class, 'logout'])->name('logout');
@@ -88,5 +92,13 @@ Route::post('/store-location', [App\Http\Controllers\HomeController::class, 'sto
     ->middleware('auth');
 
 Route::post('/provider/register', [ProviderRegisterController::class, 'register'])->name('provider.register');
+
+Route::get('/telegram/test', function() {
+    $botToken = config('services.telegram-bot-api.token');
+    $response = Http::get("https://api.telegram.org/bot{$botToken}/getMe");
+    return response()->json($response->json());
+});
+
+Route::get('/provider/{id}/profile', [App\Http\Controllers\ProviderController::class, 'showProfile'])->name('provider.profile.show');
 
 
