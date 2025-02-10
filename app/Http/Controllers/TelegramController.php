@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\Provider;
+use App\Models\Order;
+use App\Notifications\OrderAcceptedNotification;
+use App\Notifications\OrderCancelledNotification;
+use Illuminate\Support\Facades\DB;
 
 class TelegramController extends Controller
 {
@@ -30,59 +34,60 @@ class TelegramController extends Controller
 
     public function webhook(Request $request)
     {
-        Log::info('Telegram webhook payload:', $request->all());
+        try {
+            $update = $request->all();
+            Log::info('Telegram Update Received:', ['update' => $update]);
 
-        $update = $request->all();
+            if (isset($update['callback_query'])) {
+                $callbackQuery = $update['callback_query'];
+                $data = $callbackQuery['data'];
 
-        if (isset($update['message'])) {
-            $message = $update['message'];
-            $chatId = $message['chat']['id'];
-            $text = $message['text'] ?? '';
-            $username = $message['chat']['username'] ?? null;
+                if (preg_match('/(accept|cancel)_order_(\d+)/', $data, $matches)) {
+                    $action = $matches[1];
+                    $orderId = $matches[2];
 
-            if ($text === '/start' && $username) {
-                // Remove @ from username if present
-                $username = ltrim($username, '@');
+                    // Find the order
+                    $order = Order::find($orderId);
+                    
+                    if (!$order) {
+                        Log::error('Order not found:', ['order_id' => $orderId]);
+                        return response()->json(['success' => false, 'error' => 'Order not found']);
+                    }
 
-                // Try to find and update user
-                $user = User::where('telegram_username', $username)->first();
-                if ($user) {
-                    $user->update([
-                        'telegram_chat_id' => $chatId,
-                        'telegram_verified_at' => now()
+                    // Update the status
+                    $status = ($action === 'accept') ? 'processing' : 'cancelled';
+                    $order->status = $status;
+                    $order->save();
+
+                    Log::info('Order status updated:', [
+                        'order_id' => $orderId,
+                        'old_status' => $order->getOriginal('status'),
+                        'new_status' => $status
                     ]);
-                    Log::info("Updated user {$user->name} with chat ID: $chatId");
-                }
 
-                // Try to find and update provider
-                $provider = Provider::where('telegram_username', $username)->first();
-                if ($provider) {
-                    $provider->update([
-                        'telegram_chat_id' => $chatId
+                    // Update Telegram message
+                    $newText = ($action === 'accept') 
+                        ? "✅ Order #{$orderId} has been accepted!"
+                        : "❌ Order #{$orderId} has been cancelled.";
+
+                    Http::post('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/editMessageText', [
+                        'chat_id' => $callbackQuery['message']['chat']['id'],
+                        'message_id' => $callbackQuery['message']['message_id'],
+                        'text' => $newText
                     ]);
-                    Log::info("Updated provider {$provider->name} with chat ID: $chatId");
-                }
 
-                // Send welcome message
-                $response = "Welcome to the Laundry System Bot! 🧺\n\n";
-                $response .= "Your Chat ID is: `$chatId`\n";
-                $response .= "Your Username is: @$username\n\n";
-                
-                if ($user || $provider) {
-                    $response .= "✅ Your Telegram information has been automatically saved.";
-                } else {
-                    $response .= "❗ No matching user or provider found for @$username";
+                    return response()->json(['success' => true]);
                 }
-
-                Http::post('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/sendMessage', [
-                    'chat_id' => $chatId,
-                    'text' => $response,
-                    'parse_mode' => 'Markdown'
-                ]);
             }
-        }
 
-        return response()->json(['ok' => true]);
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            Log::error('Webhook error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
     }
 
     public function sendTestNotification(Request $request)
@@ -104,7 +109,7 @@ class TelegramController extends Controller
                 ]);
             }
 
-            $message = "🔔 *Test Notification*\n\n";
+            $message = " *Test Notification*\n\n";
             $message .= "This is a test notification from your Laundry System.\n";
             $message .= "If you received this message, your Telegram notifications are working correctly! 🎉";
 

@@ -149,6 +149,7 @@ select.form-control option {
                                     <option value="{{ $provider->id }}" 
                                             data-distance="{{ $provider->distance ?? 'N/A' }}"
                                             data-categories="{{ json_encode($provider->categories) }}"
+                                            data-has-telegram="{{ !empty($provider->telegram_chat_id) }}"
                                             {{ ($order ? $order->provider_id : $selectedProviderId) == $provider->id ? 'selected' : '' }}>
                                         {{ $provider->name }} 
                                         @if(isset($provider->distance))
@@ -160,6 +161,14 @@ select.form-control option {
                             @error('provider_id')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
+                            
+                            <!-- Add this notification status div -->
+                            <div id="provider-telegram-status" class="mt-2" style="display: none;">
+                                <div class="alert alert-warning">
+                                    <i class="tim-icons icon-bell-55"></i>
+                                    <small>This provider hasn't set up Telegram notifications yet. They might take longer to respond to your order.</small>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group mb-4">
@@ -443,5 +452,26 @@ document.getElementById('pickup_time').addEventListener('change', function() {
         deliveryInput.value = minDelivery.toISOString().slice(0, 16);
     }
 });
+
+document.getElementById('provider_id').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const hasTelegram = selectedOption.getAttribute('data-has-telegram') === "1";
+    const statusDiv = document.getElementById('provider-telegram-status');
+    
+    if (this.value && !hasTelegram) {
+        statusDiv.style.display = 'block';
+    } else {
+        statusDiv.style.display = 'none';
+    }
+});
+
+// Check initial state
+if (document.getElementById('provider_id').value) {
+    const selectedOption = document.getElementById('provider_id').options[document.getElementById('provider_id').selectedIndex];
+    const hasTelegram = selectedOption.getAttribute('data-has-telegram') === "1";
+    if (!hasTelegram) {
+        document.getElementById('provider-telegram-status').style.display = 'block';
+    }
+}
 </script>
 @endpush 

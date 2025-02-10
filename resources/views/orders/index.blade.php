@@ -183,6 +183,10 @@ body, .wrapper, .main-panel, .content {
 </style>
 @endpush
 
+@push('head')
+    <meta http-equiv="refresh" content="10">  {{-- Refresh more frequently for testing --}}
+@endpush
+
 @section('content')
 <div class="container-fluid">
     <!-- Page Heading -->
@@ -207,7 +211,6 @@ body, .wrapper, .main-panel, .content {
                                     <th>Services</th>
                                     <th>Pickup Date</th>
                                     <th>Delivery Date</th>
-                                    <th>Delivery</th>
                                     <th>Status</th>
                                     <th>Total</th>
                                     <th>Action</th>
@@ -221,46 +224,37 @@ body, .wrapper, .main-panel, .content {
                                     <td>
                                         <ul class="list-unstyled mb-0">
                                             @foreach($order->provider->categories as $category)
-                                                <li><i class="tim-icons icon-check-2 text-success"></i> {{ $category }}</li>
+                                                <li><i class="tim-icons icon-check-2"></i> {{ $category }}</li>
                                             @endforeach
                                         </ul>
-                                        <small class="text-muted">
-                                            Total Categories: {{ count($order->provider->categories) }}
-                                        </small>
                                     </td>
+                                    <td>{{ $order->pickup_time->format('d M Y h:i A') }}</td>
+                                    <td>{{ $order->delivery_time->format('d M Y h:i A') }}</td>
                                     <td>
-                                        {{ $order->pickup_time->format('d M Y') }}<br>
-                                        <small class="text-muted">{{ $order->pickup_time->format('h:i A') }}</small>
-                                    </td>
-                                    <td>
-                                        {{ $order->delivery_time->format('d M Y') }}<br>
-                                        <small class="text-muted">{{ $order->delivery_time->format('h:i A') }}</small>
-                                    </td>
-                                    <td>
-                                        RM {{ number_format($order->delivery_charge, 2) }}<br>
-                                        <small class="text-muted">
-                                            @if(isset($order->provider->distance))
-                                                ({{ $order->provider->distance }} km)
-                                            @endif
-                                        </small>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-{{ $order->status_color }}">
+                                        @php
+                                            $statusColors = [
+                                                'pending' => 'warning',
+                                                'processing' => 'info',
+                                                'completed' => 'success',
+                                                'cancelled' => 'danger'
+                                            ];
+                                            $statusColor = $statusColors[$order->status] ?? 'secondary';
+                                        @endphp
+                                        <span class="badge badge-{{ $statusColor }}">
                                             {{ ucfirst($order->status) }}
                                         </span>
                                     </td>
-                                    <td><span style="color: rgb(0, 0, 0);">RM {{ number_format($order->total, 2) }}</td>
+                                    <td>RM {{ number_format($order->total, 2) }}</td>
                                     <td>
                                         @if($order->status === 'pending')
-                                            <div class="btn-group" role="group">
+                                            <div class="btn-group">
                                                 <a href="{{ route('orders.edit', $order->id) }}" 
                                                    class="btn btn-sm btn-warning">
                                                     <i class="tim-icons icon-pencil"></i> Edit
                                                 </a>
                                                 <form action="{{ route('orders.destroy', $order->id) }}" 
                                                       method="POST" 
-                                                      class="d-inline"
-                                                      onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                                                      class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-sm btn-danger">
@@ -275,9 +269,7 @@ body, .wrapper, .main-panel, .content {
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="8" class="text-center">
-                                        No orders found
-                                    </td>
+                                    <td colspan="8" class="text-center">No orders found</td>
                                 </tr>
                                 @endforelse
                             </tbody>

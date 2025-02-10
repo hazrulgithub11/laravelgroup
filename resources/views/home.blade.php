@@ -125,35 +125,83 @@ input[type="checkbox"] {
             </div>
         </div>
 
-        <!-- Replace the existing test notification button section with this -->
+        <!-- Replace the existing telegram notification section -->
         <div class="row justify-content-center mb-5">
-            <div class="col-md-6 text-center">
+            <div class="col-md-6">
                 @php
                     $user = auth()->user();
                     $hasTelegramChatId = !empty($user->telegram_chat_id);
+                    $isProvider = auth()->user()->provider !== null;
                 @endphp
 
-                @if($hasTelegramChatId)
-                    <button onclick="testTelegramNotification()" class="btn" 
-                            style="background: #1E856D; color: white; padding: 0.5rem 1.5rem; border-radius: 4px;">
-                        🔔 Test Telegram Notification
-                    </button>
-                    <p class="text-success mt-2" style="font-size: 0.9rem;">
-                        ✅ Your Telegram is connected (Chat ID: {{ $user->telegram_chat_id }})
-                    </p>
-                @else
-                    <div class="alert alert-warning" style="background: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107;">
-                        <h5 class="text-warning">⚠️ Telegram Not Connected</h5>
-                        <p>Please follow these steps to connect your Telegram:</p>
-                        <ol class="text-left">
-                            <li>Open Telegram</li>
-                            <li>Search for <a href="https://t.me/LaundrySystem_bot" target="_blank" style="color: #1E856D;">@LaundrySystem_bot</a></li>
-                            <li>Click "Start" or send the /start command</li>
-                            <li>The bot will provide your Chat ID</li>
-                            <li>Update your profile with the provided Chat ID</li>
-                        </ol>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">📱 Telegram Notifications</h5>
+
+                        @if($hasTelegramChatId)
+                            <div class="alert alert-success" style="background: rgba(25, 135, 84, 0.1); border: 1px solid #198754;">
+                                <p class="mb-2">✅ Your Telegram is connected!</p>
+                                <small class="text-muted">Chat ID: {{ $user->telegram_chat_id }}</small>
+                                
+                                <div class="mt-3">
+                                    <button onclick="testTelegramNotification()" class="btn btn-sm" 
+                                            style="background: #1E856D; color: white;">
+                                        🔔 Test Notification
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <h6>You will receive notifications for:</h6>
+                                <ul class="list-unstyled">
+                                    @if(!$isProvider)
+                                        <li>✓ Order status updates</li>
+                                        <li>✓ Provider assignment</li>
+                                        <li>✓ Pickup and delivery reminders</li>
+                                    @else
+                                        <li>✓ New order notifications</li>
+                                        <li>✓ Order assignment alerts</li>
+                                        <li>✓ Customer messages</li>
+                                    @endif
+                                </ul>
+                            </div>
+                        @else
+                            <div class="alert alert-warning" style="background: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107;">
+                                <h6 class="text-warning mb-3">⚠️ Telegram Not Connected</h6>
+                                
+                                @if(!$isProvider)
+                                    <p class="mb-2">Connect Telegram to receive:</p>
+                                    <ul class="mb-3">
+                                        <li>Real-time order updates</li>
+                                        <li>Pickup and delivery notifications</li>
+                                        <li>Service provider updates</li>
+                                    </ul>
+                                @else
+                                    <p class="mb-2">Connect Telegram to receive:</p>
+                                    <ul class="mb-3">
+                                        <li>Instant order notifications</li>
+                                        <li>Customer messages</li>
+                                        <li>Service reminders</li>
+                                    </ul>
+                                @endif
+
+                                <p class="mb-2">Follow these steps to connect:</p>
+                                <ol class="text-left mb-3">
+                                    <li>Open Telegram</li>
+                                    <li>Search for <a href="https://t.me/LaundrySystem_bot" target="_blank" style="color: #1E856D;">@LaundrySystem_bot</a></li>
+                                    <li>Click "Start" or send the /start command</li>
+                                    <li>The bot will provide your Chat ID</li>
+                                    <li>Update your profile with the provided Chat ID</li>
+                                </ol>
+
+                                <a href="{{ route('profile.edit') }}" class="btn btn-sm" 
+                                   style="background: #1E856D; color: white;">
+                                    Update Profile
+                                </a>
+                            </div>
+                        @endif
                     </div>
-                @endif
+                </div>
             </div>
         </div>
 

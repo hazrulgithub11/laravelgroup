@@ -110,12 +110,6 @@ class OrderController extends Controller
         try {
             $provider = Provider::findOrFail($validated['provider_id']);
             
-            // Debug log to see provider details
-            \Log::info('Attempting to send notification to provider:', [
-                'provider_id' => $provider->id,
-                'telegram_chat_id' => $provider->telegram_chat_id
-            ]);
-            
             // Check if provider has a telegram chat ID
             if (!$provider->telegram_chat_id) {
                 \Log::warning("Provider #{$provider->id} has no Telegram chat ID configured.");
@@ -125,59 +119,24 @@ class OrderController extends Controller
                     ->with('warning', 'Provider notification could not be sent (No Telegram chat ID configured).');
             }
 
-            // Try to send notification
-            try {
-                // Send direct Telegram message
-                $response = Http::post('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/sendMessage', [
-                    'chat_id' => $provider->telegram_chat_id,
-                    'text' => "🔔 *New Order #" . $order->id . "*\n\n" .
-                             "📦 Services: " . implode(', ', array_filter([
-                                 $order->washing ? 'Washing' : null,
-                                 $order->ironing ? 'Ironing' : null,
-                                 $order->dry_cleaning ? 'Dry Cleaning' : null
-                             ])) . "\n" .
-                             "📅 Pickup: " . $order->pickup_time->format('d M Y h:i A') . "\n" .
-                             "🚚 Delivery: " . $order->delivery_time->format('d M Y h:i A') . "\n" .
-                             "💰 Total: RM " . number_format($order->total, 2) . "\n" .
-                             "📍 Address: " . $order->address . "\n\n" .
-                             "Please login to your dashboard to accept this order.",
-                    'parse_mode' => 'Markdown'
-                ]);
+            // Send notification using the NewOrderNotification class
+            $provider->notify(new NewOrderNotification($order));
 
-                if ($response->successful() && ($response->json()['ok'] ?? false)) {
-                    \Log::info('Successfully sent notification to provider', [
-                        'provider_id' => $provider->id,
-                        'order_id' => $order->id
-                    ]);
-                    return redirect()
-                        ->route('orders.index')
-                        ->with('success', 'Order created successfully! Provider has been notified.');
-                } else {
-                    throw new \Exception($response->body());
-                }
-            } catch (\Exception $e) {
-                // Log the specific Telegram error
-                \Log::error('Telegram notification failed:', [
-                    'error' => $e->getMessage(),
-                    'provider_id' => $provider->id,
-                    'telegram_chat_id' => $provider->telegram_chat_id
-                ]);
-                return redirect()
-                    ->route('orders.index')
-                    ->with('success', 'Order created successfully!')
-                    ->with('warning', "Couldn't send notification to provider. They will see the order in their dashboard.");
-            }
-        } catch (\Exception $e) {
-            // Log any other errors but don't stop the order creation
-            \Log::error('Failed to send Telegram notification:', [
-                'error' => $e->getMessage(),
-                'error_class' => get_class($e),
-                'stack_trace' => $e->getTraceAsString()
+            \Log::info('Successfully sent notification to provider', [
+                'provider_id' => $provider->id,
+                'order_id' => $order->id
             ]);
+
+            return redirect()
+                ->route('orders.index')
+                ->with('success', 'Order created successfully! Provider has been notified.');
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to send provider notification: ' . $e->getMessage());
             return redirect()
                 ->route('orders.index')
                 ->with('success', 'Order created successfully!')
-                ->with('warning', 'Could not send notification to provider.');
+                ->with('warning', 'Failed to send provider notification: ' . $e->getMessage());
         }
     }
 

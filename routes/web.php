@@ -89,6 +89,8 @@ Route::prefix('provider')->name('provider.')->group(function () {
         Route::get('/orders', [ProviderDashboardController::class, 'orders'])->name('orders.index');
         Route::put('/orders/{order}/update', [ProviderDashboardController::class, 'updateOrderStatus'])->name('orders.update');
         Route::put('/orders/{order}/complete', [ProviderDashboardController::class, 'completeOrder'])->name('orders.complete');
+        Route::get('/orders/{order}/accept', [ProviderDashboardController::class, 'acceptOrder'])->name('provider.orders.accept');
+        Route::get('/orders/{order}/cancel', [ProviderDashboardController::class, 'cancelOrder'])->name('provider.orders.cancel');
         
         // Other routes...
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

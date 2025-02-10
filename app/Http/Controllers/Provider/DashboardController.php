@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Notifications\OrderAcceptedNotification;
+use App\Notifications\OrderCancelledNotification;
 use Illuminate\Support\Facades\Http;
 
 class DashboardController extends Controller
@@ -87,5 +88,55 @@ class DashboardController extends Controller
             ->get();
         
         return view('provider.orders', compact('orders'));
+    }
+
+    public function acceptOrder(Order $order)
+    {
+        // Verify the order belongs to this provider
+        if ($order->provider_id !== auth()->guard('provider')->id()) {
+            abort(403);
+        }
+
+        if ($order->status !== 'pending') {
+            return redirect()->route('provider.dashboard')
+                ->with('error', 'Order cannot be accepted - invalid status');
+        }
+
+        $order->update(['status' => 'processing']);
+        
+        // Send notification to user
+        try {
+            $order->user->notify(new OrderAcceptedNotification($order));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send user notification: ' . $e->getMessage());
+        }
+
+        return redirect()->route('provider.dashboard')
+            ->with('success', 'Order accepted successfully!');
+    }
+
+    public function cancelOrder(Order $order)
+    {
+        // Verify the order belongs to this provider
+        if ($order->provider_id !== auth()->guard('provider')->id()) {
+            abort(403);
+        }
+
+        if ($order->status !== 'pending') {
+            return redirect()->route('provider.dashboard')
+                ->with('error', 'Order cannot be cancelled - invalid status');
+        }
+
+        $order->update(['status' => 'cancelled']);
+        
+        // Notify user about cancellation
+        try {
+            $order->user->notify(new OrderCancelledNotification($order));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send cancellation notification: ' . $e->getMessage());
+        }
+
+        return redirect()->route('provider.dashboard')
+            ->with('success', 'Order cancelled successfully');
     }
 } 
