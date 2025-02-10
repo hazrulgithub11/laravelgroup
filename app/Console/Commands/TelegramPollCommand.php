@@ -25,10 +25,11 @@ class TelegramPollCommand extends Command
         while (true) {
             try {
                 $this->info('Polling for updates...');
-                $response = Http::get('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/getUpdates', [
-                    'offset' => $this->lastUpdateId + 1,
-                    'timeout' => 10
-                ]);
+                $response = Http::withoutVerifying()
+                    ->get('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/getUpdates', [
+                        'offset' => $this->lastUpdateId + 1,
+                        'timeout' => 10
+                    ]);
 
                 if (!$response->successful()) {
                     $this->error('HTTP Error: ' . $response->status());
@@ -64,9 +65,10 @@ class TelegramPollCommand extends Command
     {
         $this->info('Clearing existing updates...');
         try {
-            $response = Http::get('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/getUpdates', [
-                'offset' => -1
-            ]);
+            $response = Http::withoutVerifying()
+                ->get('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/getUpdates', [
+                    'offset' => -1
+                ]);
             $this->info('Updates cleared.');
         } catch (\Exception $e) {
             $this->error('Failed to clear updates: ' . $e->getMessage());
@@ -106,10 +108,11 @@ class TelegramPollCommand extends Command
     {
         $this->info("Sending message to $chatId: $text");
         
-        return Http::post('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/sendMessage', [
-            'chat_id' => $chatId,
-            'text' => $text,
-            'parse_mode' => 'Markdown'
-        ]);
+        return Http::withoutVerifying()
+            ->post('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/sendMessage', [
+                'chat_id' => $chatId,
+                'text' => $text,
+                'parse_mode' => 'Markdown'
+            ]);
     }
 } 

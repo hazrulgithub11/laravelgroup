@@ -26,7 +26,49 @@ class TelegramController extends Controller
                 'headers' => $request->headers->all()
             ]);
 
-            if (isset($update['message'])) {
+            // Handle callback queries (button clicks)
+            if (isset($update['callback_query'])) {
+                $callbackQuery = $update['callback_query'];
+                $chatId = $callbackQuery['message']['chat']['id'];
+                $messageId = $callbackQuery['message']['message_id'];
+                $data = $callbackQuery['data'];
+
+                // Log the button click
+                Log::info('Button clicked:', [
+                    'chat_id' => $chatId,
+                    'button' => $data
+                ]);
+
+                // Handle different button clicks
+                switch ($data) {
+                    case 'hello_back':
+                        $newText = "👋 Hello back from Telegram!";
+                        break;
+                        
+                    case 'bye':
+                        $newText = "👋 Goodbye from Telegram!";
+                        break;
+                        
+                    default:
+                        $newText = "Unknown button clicked";
+                }
+                
+                // Update the original message
+                $response = Http::post('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/editMessageText', [
+                    'chat_id' => $chatId,
+                    'message_id' => $messageId,
+                    'text' => $newText
+                ]);
+
+                Log::info('Message updated:', $response->json());
+
+                // Answer callback query to remove loading state
+                Http::post('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/answerCallbackQuery', [
+                    'callback_query_id' => $callbackQuery['id']
+                ]);
+            }
+            // Handle regular messages (including /start)
+            else if (isset($update['message'])) {
                 $message = $update['message'];
                 $chatId = $message['chat']['id'];
                 $text = $message['text'] ?? '';
@@ -58,49 +100,6 @@ class TelegramController extends Controller
         }
     }
 
-    public function setWebhook()
-    {
-        // For local testing, we'll use ngrok or a similar service
-        // You need to run ngrok http 80 and use the HTTPS URL it provides
-        $webhookUrl = 'https://your-ngrok-url.ngrok.io/api/telegram/webhook';
-        // Or use a service like webhook.site for testing
-        // $webhookUrl = 'https://webhook.site/your-unique-id';
-        
-        Log::info('Setting Telegram webhook:', ['url' => $webhookUrl]);
-        
-        // First, delete any existing webhook
-        $deleteResponse = Http::get('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/deleteWebhook');
-        Log::info('Delete webhook response:', $deleteResponse->json());
-
-        // Set the new webhook
-        $response = Http::post('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/setWebhook', [
-            'url' => $webhookUrl,
-            'allowed_updates' => ['message']
-        ]);
-
-        $result = $response->json();
-        Log::info('Webhook setup response:', $result);
-
-        if (!$response->successful() || !$result['ok']) {
-            Log::error('Failed to set webhook:', $result);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to set webhook',
-                'response' => $result
-            ], 400);
-        }
-
-        // Get current webhook info
-        $info = Http::get('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/getWebhookInfo')->json();
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Webhook set successfully',
-            'webhook_url' => $webhookUrl,
-            'webhook_info' => $info
-        ]);
-    }
-
     public function testMessage($chatId)
     {
         try {
@@ -130,6 +129,105 @@ class TelegramController extends Controller
                 'message' => 'Error sending message',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function sendTestNotification(Request $request)
+    {
+        try {
+            // First, let's try to get chat info
+            $response = Http::withoutVerifying()
+                ->get('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/getChat', [
+                    'chat_id' => '5802892985'  // Your chat ID
+                ]);
+
+            Log::info('Get Chat Response:', $response->json());
+
+            if (!$response->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to get chat info: ' . $response->body()
+                ]);
+            }
+
+            $chatInfo = $response->json();
+            
+            if (!isset($chatInfo['ok']) || !$chatInfo['ok']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Could not get chat info: ' . ($chatInfo['description'] ?? 'Unknown error')
+                ]);
+            }
+
+            // If we got here, we have valid chat info
+            $chatId = $chatInfo['result']['id'];
+            
+            // Now send a test message with buttons
+            $response = Http::withoutVerifying()
+                ->post('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/sendMessage', [
+                    'chat_id' => $chatId,
+                    'text' => "👋 Hello from home!",
+                    'reply_markup' => json_encode([
+                        'inline_keyboard' => [
+                            [
+                                ['text' => '👋 Hello Back', 'callback_data' => 'hello_back'],
+                                ['text' => '👋 Bye', 'callback_data' => 'bye']
+                            ]
+                        ]
+                    ])
+                ]);
+
+            Log::info('Send Message Response:', $response->json());
+
+            if ($response->successful() && ($response->json()['ok'] ?? false)) {
+                return response()->json(['success' => true, 'message' => 'Test message sent successfully! Check your Telegram.']);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to send message: ' . ($response->json()['description'] ?? 'Unknown error')
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Exception:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function setWebhook()
+    {
+        try {
+            $webhookUrl = url('/api/telegram/webhook'); // Your webhook URL
+            
+            $response = Http::get('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/setWebhook', [
+                'url' => $webhookUrl,
+                'allowed_updates' => ['message', 'callback_query'] // Explicitly allow callback_query updates
+            ]);
+
+            Log::info('Webhook setup response:', $response->json());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Webhook set: ' . $webhookUrl,
+                'response' => $response->json()
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Webhook setup error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error setting webhook: ' . $e->getMessage()
+            ]);
         }
     }
 } 

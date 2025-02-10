@@ -14,6 +14,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Auth\ProviderRegisterController;
 use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\Provider\ProfileController;
+use App\Http\Controllers\TelegramController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,6 +60,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
     Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
     Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
+
+    // Make sure this is inside the auth middleware group if you have one
+    Route::post('/test-telegram-notification', [TelegramController::class, 'sendTestNotification'])
+        ->name('test.telegram.notification');
 });
 
 // Add this route to test the master layout
