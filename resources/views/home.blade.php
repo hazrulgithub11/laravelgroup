@@ -120,6 +120,16 @@ input[type="checkbox"] {
             </div>
         </div>
 
+        <!-- Add this button after the search bar section (around line 121) -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-md-6 text-center">
+                <button onclick="testTelegramNotification()" class="btn" 
+                        style="background: #1E856D; color: white; padding: 0.5rem 1.5rem; border-radius: 4px;">
+                    🔔 Test Telegram Notification
+                </button>
+            </div>
+        </div>
+
         <!-- Services Section -->
         <div class="mb-4">
             <h5 class="mb-4" style="color: #666;">Explore more projects.</h5>
@@ -599,5 +609,28 @@ document.addEventListener('DOMContentLoaded', function() {
         checkbox.addEventListener('change', applyFilters);
     });
 });
+
+function testTelegramNotification() {
+    // Get the current user's telegram username from the page
+    fetch('/test-telegram-notification', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Test message sent successfully! Check your Telegram.');
+        } else {
+            alert('Error: ' + (data.message || 'Could not send test message'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error sending test message. Please try again.');
+    });
+}
 </script>
 @endpush
