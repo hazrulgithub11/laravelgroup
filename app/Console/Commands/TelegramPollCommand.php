@@ -8,70 +8,39 @@ use Illuminate\Support\Facades\Log;
 
 class TelegramPollCommand extends Command
 {
-    protected $signature = 'telegram:poll {--clear-updates}';
-    protected $description = 'Poll for Telegram updates';
-
+    protected $signature = 'telegram:poll';
+    protected $description = 'Start polling for Telegram updates';
     private $lastUpdateId = 0;
 
     public function handle()
     {
         $this->info('Starting Telegram polling...');
-
-        // Clear existing updates if requested
-        if ($this->option('clear-updates')) {
-            $this->clearUpdates();
-        }
         
         while (true) {
             try {
                 $this->info('Polling for updates...');
+                
                 $response = Http::withoutVerifying()
                     ->get('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/getUpdates', [
                         'offset' => $this->lastUpdateId + 1,
-                        'timeout' => 10
+                        'timeout' => 30
                     ]);
-
-                if (!$response->successful()) {
-                    $this->error('HTTP Error: ' . $response->status());
-                    $this->error('Response: ' . $response->body());
-                    sleep(5);
-                    continue;
-                }
-
-                $data = $response->json();
-                $this->info('Response received: ' . json_encode($data));
-
-                if ($data['ok'] && !empty($data['result'])) {
-                    foreach ($data['result'] as $update) {
+                
+                if ($response->successful()) {
+                    $updates = $response->json()['result'] ?? [];
+                    
+                    foreach ($updates as $update) {
                         $this->processUpdate($update);
                         $this->lastUpdateId = $update['update_id'];
                     }
+                } else {
+                    $this->error('Failed to get updates: ' . $response->body());
+                    sleep(5);
                 }
-
-                // Small delay to prevent hammering the API
-                usleep(500000); // 0.5 second delay
             } catch (\Exception $e) {
                 $this->error('Error: ' . $e->getMessage());
-                Log::error('Telegram polling error:', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
                 sleep(5);
             }
-        }
-    }
-
-    private function clearUpdates()
-    {
-        $this->info('Clearing existing updates...');
-        try {
-            $response = Http::withoutVerifying()
-                ->get('https://api.telegram.org/bot' . config('services.telegram-bot-api.token') . '/getUpdates', [
-                    'offset' => -1
-                ]);
-            $this->info('Updates cleared.');
-        } catch (\Exception $e) {
-            $this->error('Failed to clear updates: ' . $e->getMessage());
         }
     }
 
@@ -83,15 +52,24 @@ class TelegramPollCommand extends Command
             $message = $update['message'];
             $chatId = $message['chat']['id'];
             $text = $message['text'] ?? '';
-            $username = $message['chat']['username'] ?? 'unknown';
+            $username = $message['chat']['username'] ?? null;
 
             $this->info("Received message '$text' from chat ID: $chatId (username: @$username)");
 
-            if ($text === '/start') {
+            if ($text === '/start' && $username) {
+                // Try to find and update the user/provider with this telegram username
+                $userOrProviderFound = $this->updateTelegramInfo($username, $chatId);
+
                 $response = "Welcome to the Laundry System Bot! 🧺\n\n";
                 $response .= "Your Chat ID is: `$chatId`\n";
                 $response .= "Your Username is: @$username\n\n";
-                $response .= "Please save this Chat ID and update it in your provider profile to receive order notifications.";
+                
+                if ($userOrProviderFound) {
+                    $response .= "✅ Your Telegram information has been automatically saved.";
+                } else {
+                    $response .= "❗ No matching user or provider found for @$username\n";
+                    $response .= "Please make sure you've registered with this Telegram username.";
+                }
                 
                 $result = $this->sendMessage($chatId, $response);
                 
@@ -102,6 +80,53 @@ class TelegramPollCommand extends Command
                 }
             }
         }
+    }
+
+    private function updateTelegramInfo($username, $chatId)
+    {
+        // Remove @ from username if present
+        $username = ltrim($username, '@');
+
+        $found = false;
+
+        // Try to find and update user with or without @ prefix
+        $user = \App\Models\User::where('telegram_username', $username)
+            ->orWhere('telegram_username', '@' . $username)
+            ->first();
+        
+        if ($user) {
+            $user->update([
+                'telegram_chat_id' => $chatId,
+                'telegram_verified_at' => now()
+            ]);
+            $this->info("Updated user {$user->name} with chat ID: $chatId");
+            $found = true;
+        }
+
+        // Try to find and update provider with or without @ prefix
+        $provider = \App\Models\Provider::where('telegram_username', $username)
+            ->orWhere('telegram_username', '@' . $username)
+            ->first();
+        
+        if ($provider) {
+            $provider->update([
+                'telegram_chat_id' => $chatId
+            ]);
+            $this->info("Updated provider {$provider->name} with chat ID: $chatId");
+            $found = true;
+        }
+
+        if (!$found) {
+            $this->warn("No user or provider found with telegram username: $username");
+            // Log the actual search conditions for debugging
+            $this->info("Searched for username: '$username' or '@$username'");
+            
+            // Log all users and their telegram usernames for debugging
+            $allUsers = \App\Models\User::whereNotNull('telegram_username')->get(['id', 'name', 'telegram_username']);
+            $this->info("All users with telegram usernames: " . json_encode($allUsers));
+        }
+
+        return $found;
     }
 
     private function sendMessage($chatId, $text)

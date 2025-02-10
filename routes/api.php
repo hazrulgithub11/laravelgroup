@@ -24,3 +24,5 @@ Route::get('/telegram/set-webhook', [TelegramController::class, 'setWebhook']);
 Route::post('/telegram/webhook', [TelegramController::class, 'webhook']);
 Route::get('/telegram/test-message/{chat_id}', [TelegramController::class, 'testMessage']);
 Route::get('/providers/{service}', [ProviderController::class, 'getByService']);
+Route::post('/telegram/test-notification', [TelegramController::class, 'sendTestNotification'])
+    ->middleware('auth');

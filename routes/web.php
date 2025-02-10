@@ -103,11 +103,9 @@ Route::post('/store-location', [App\Http\Controllers\HomeController::class, 'sto
 
 Route::post('/provider/register', [ProviderRegisterController::class, 'register'])->name('provider.register');
 
-Route::get('/telegram/test', function() {
-    $botToken = config('services.telegram-bot-api.token');
-    $response = Http::get("https://api.telegram.org/bot{$botToken}/getMe");
-    return response()->json($response->json());
-});
+Route::post('/telegram/test-notification', [TelegramController::class, 'sendTestNotification'])
+    ->middleware('auth')
+    ->name('telegram.test');
 
 Route::get('/provider/{id}/profile', [App\Http\Controllers\ProviderController::class, 'showProfile'])->name('provider.profile.show');
 

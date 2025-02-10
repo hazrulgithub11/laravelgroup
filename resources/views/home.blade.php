@@ -94,6 +94,11 @@ input[type="checkbox"] {
 </style>
 @endpush
 
+@section('head')
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@endsection
+
 @section('content')
 <!-- Add a wrapper div for the background -->
 <div class="page-wrapper">
@@ -120,13 +125,35 @@ input[type="checkbox"] {
             </div>
         </div>
 
-        <!-- Add this button after the search bar section (around line 121) -->
+        <!-- Replace the existing test notification button section with this -->
         <div class="row justify-content-center mb-5">
             <div class="col-md-6 text-center">
-                <button onclick="testTelegramNotification()" class="btn" 
-                        style="background: #1E856D; color: white; padding: 0.5rem 1.5rem; border-radius: 4px;">
-                    🔔 Test Telegram Notification
-                </button>
+                @php
+                    $user = auth()->user();
+                    $hasTelegramChatId = !empty($user->telegram_chat_id);
+                @endphp
+
+                @if($hasTelegramChatId)
+                    <button onclick="testTelegramNotification()" class="btn" 
+                            style="background: #1E856D; color: white; padding: 0.5rem 1.5rem; border-radius: 4px;">
+                        🔔 Test Telegram Notification
+                    </button>
+                    <p class="text-success mt-2" style="font-size: 0.9rem;">
+                        ✅ Your Telegram is connected (Chat ID: {{ $user->telegram_chat_id }})
+                    </p>
+                @else
+                    <div class="alert alert-warning" style="background: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107;">
+                        <h5 class="text-warning">⚠️ Telegram Not Connected</h5>
+                        <p>Please follow these steps to connect your Telegram:</p>
+                        <ol class="text-left">
+                            <li>Open Telegram</li>
+                            <li>Search for <a href="https://t.me/LaundrySystem_bot" target="_blank" style="color: #1E856D;">@LaundrySystem_bot</a></li>
+                            <li>Click "Start" or send the /start command</li>
+                            <li>The bot will provide your Chat ID</li>
+                            <li>Update your profile with the provided Chat ID</li>
+                        </ol>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -367,13 +394,43 @@ input[type="checkbox"] {
 .gap-2 {
     gap: 0.5rem;
 }
+
+.alert {
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.alert ol {
+    margin-bottom: 0;
+    padding-left: 1.2rem;
+}
+
+.alert ol li {
+    margin-bottom: 0.5rem;
+}
+
+.alert ol li:last-child {
+    margin-bottom: 0;
+}
+
+.alert a {
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.alert a:hover {
+    text-decoration: underline;
+}
 </style>
 
 @endsection
 
 @push('scripts')
-<script>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+<script>
 function handleSearch() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const services = {
@@ -611,25 +668,57 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function testTelegramNotification() {
-    // Get the current user's telegram username from the page
-    fetch('/test-telegram-notification', {
+    // Show loading state
+    Swal.fire({
+        title: 'Sending...',
+        text: 'Sending test notification',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    fetch('{{ route("telegram.test") }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        }
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        credentials: 'same-origin'
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
-            alert('Test message sent successfully! Check your Telegram.');
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: 'Test notification sent! Please check your Telegram.',
+                confirmButtonColor: '#1E856D'
+            });
         } else {
-            alert('Error: ' + (data.message || 'Could not send test message'));
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'Failed to send notification',
+                confirmButtonColor: '#1E856D'
+            });
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error sending test message. Please try again.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to send test notification. Please try again.',
+            confirmButtonColor: '#1E856D'
+        });
     });
 }
 </script>
