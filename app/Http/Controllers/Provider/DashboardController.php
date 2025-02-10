@@ -17,10 +17,9 @@ class DashboardController extends Controller
 
     public function index()
     {
-        // Get all orders for the logged-in provider
         $orders = Order::where('provider_id', auth()->guard('provider')->id())
-            ->with('user')  // Eager load the user relationship
-            ->latest()      // Most recent orders first
+            ->with('user')
+            ->latest()
             ->get();
         
         return view('provider.dashboard', compact('orders'));
@@ -105,5 +104,16 @@ class DashboardController extends Controller
                 ->route('provider.profile')
                 ->with('success', 'Profile updated but failed to send test notification. Please verify your Telegram Chat ID.');
         }
+    }
+
+    public function orders()
+    {
+        // Get all orders for the logged-in provider
+        $orders = Order::where('provider_id', auth()->guard('provider')->id())
+            ->with('user')  // Eager load the user relationship
+            ->latest()      // Most recent orders first
+            ->get();
+        
+        return view('provider.orders', compact('orders'));
     }
 } 

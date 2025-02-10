@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css?family=Poppins:200,300,400,600,700,800" rel="stylesheet">
 
     <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="{{ asset('admin/src/black-stubs/resources/assets/css/nucleo-icons.css') }}" rel="stylesheet">
 
     <!-- Theme CSS -->

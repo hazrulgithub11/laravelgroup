@@ -16,7 +16,7 @@
                 </a>
             </li>
             <li class="{{ Request::is('provider/orders*') ? 'active' : '' }}">
-                <a href="{{ route('provider.dashboard') }}">
+                <a href="{{ route('provider.orders.index') }}">
                     <i class="tim-icons icon-basket-simple"></i>
                     <p>Orders</p>
                 </a>

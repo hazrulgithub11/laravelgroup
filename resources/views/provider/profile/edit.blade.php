@@ -1,5 +1,129 @@
 @extends('provider.layouts.master')
 
+@section('title', 'Edit Profile')
+
+@push('css')
+<style>
+/* Override dark theme with white background */
+body, 
+.wrapper,
+.main-panel,
+.content {
+    background: #ffffff !important;
+    color: #2f3033 !important;
+}
+
+/* Make Dashboard title black */
+.navbar-brand,
+.navbar .navbar-brand,
+.navbar h4,
+.card h4,
+.card-title {
+    color: #000000 !important;
+}
+
+/* Style for the page wrapper */
+.page-wrapper {
+    background: #ffffff;
+    min-height: 100vh;
+    padding: 4rem 0;
+    position: relative;
+}
+
+/* Make all headings black */
+h1, h2, h3, h4, h5, h6 {
+    color: #000000 !important;
+}
+
+/* Override any dark theme text colors */
+.text-muted {
+    color: #666666 !important;
+}
+
+/* Style for cards */
+.card {
+    background: #ffffff;
+    border: 1px solid #e8e8e8;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Form styles */
+.form-control {
+    background: #ffffff !important;
+    border: 1px solid #e8e8e8;
+    color: #2f3033 !important;
+}
+
+.form-control:focus {
+    border-color: #1E856D;
+    box-shadow: 0 0 0 0.2rem rgba(30, 133, 109, 0.25);
+}
+
+/* Button styles */
+.btn-primary {
+    background: #1E856D !important;
+    border: none;
+    color: #ffffff !important;
+}
+
+.btn-danger {
+    background: #ff5b5b !important;
+    border: none;
+    color: #ffffff !important;
+}
+
+.btn-success {
+    background: #1E856D !important;
+    border: none;
+    color: #ffffff !important;
+}
+
+/* Label styles */
+label {
+    color: #2f3033 !important;
+    font-weight: 500;
+}
+
+/* Alert styles */
+.alert-success {
+    background: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+/* Payment methods input group */
+.input-group {
+    margin-bottom: 1rem;
+}
+
+.input-group-append .btn {
+    padding: 0.375rem 0.75rem;
+}
+
+/* Override sidebar color and text */
+.sidebar {
+    background: #1E856D !important;
+}
+.sidebar .nav li a p,
+.sidebar .nav li a i,
+.sidebar .logo a {
+    color: #ffffff !important;
+}
+
+/* Override navbar color */
+.navbar {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e8e8e8;
+}
+</style>
+@endpush
+
 @section('content')
 <div class="content">
     <div class="row">

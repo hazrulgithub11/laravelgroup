@@ -79,10 +79,15 @@ Route::prefix('provider')->name('provider.')->group(function () {
     // Authenticated provider routes
     Route::middleware('auth:provider')->group(function () {
         Route::get('/dashboard', [ProviderDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-        Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        
+        // Orders routes
+        Route::get('/orders', [ProviderDashboardController::class, 'orders'])->name('orders.index');
         Route::put('/orders/{order}/update', [ProviderDashboardController::class, 'updateOrderStatus'])->name('orders.update');
         Route::put('/orders/{order}/complete', [ProviderDashboardController::class, 'completeOrder'])->name('orders.complete');
+        
+        // Other routes...
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::post('/logout', [ProviderController::class, 'logout'])->name('logout');
     });
 });

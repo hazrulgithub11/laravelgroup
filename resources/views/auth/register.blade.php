@@ -1,7 +1,15 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid" style="width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;">
+<!-- Add Back Button -->
+<div class="position-fixed" style="top: 20px; left: 20px; z-index: 9999;">
+    <a href="{{ url('/') }}" class="btn btn-link text-dark" style="text-decoration: none;">
+        <i class="fas fa-arrow-left"></i>
+        <span class="ms-2">Back</span>
+    </a>
+</div>
+
+<div class="container-fluid" style="width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9998;">
     <div class="row justify-content-center" style="width: 400px">
         <div class="col-12">
             <div class="card" style="border: none; border-radius: 1rem; box-shadow: 0 2px 15px rgba(0,0,0,0.1); background: white;">

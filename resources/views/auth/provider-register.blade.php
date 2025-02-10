@@ -1,6 +1,14 @@
 @extends('layouts.app')
 
 @section('content')
+<!-- Add Back Button -->
+<div class="position-fixed" style="top: 20px; left: 20px; z-index: 1000;">
+    <a href="{{ url('/') }}" class="btn btn-link text-dark" style="text-decoration: none;">
+        <i class="fas fa-arrow-left"></i>
+        <span class="ms-2">Back to Home</span>
+    </a>
+</div>
+
 <div class="container-fluid" style="width: 100vw; min-height: 100vh; display: flex; align-items: center; background: #f7f7f7;">
     <div class="container">
         <div class="row align-items-center">

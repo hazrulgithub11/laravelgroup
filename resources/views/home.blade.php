@@ -108,10 +108,10 @@ input[type="checkbox"] {
         <div class="row justify-content-center mb-5">
             <div class="col-md-6">
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="What do you need help with?" 
-                           style="height: 50px; border-radius: 4px 0 0 4px; border: 1px solid #ddd;">
+                    <input type="text" class="form-control" id="searchInput" placeholder="What do you need help with?" 
+                           style="height: 50px; border-radius: 4px 0 0 4px; border: 1px solid #ddd; color: black; background: white;">
                     <div class="input-group-append">
-                        <button class="btn" type="button" 
+                        <button class="btn" type="button" onclick="handleSearch()"
                                 style="background: #1E856D; color: white; padding: 0 1.5rem; border-radius: 0 4px 4px 0;">
                             <i class="fas fa-search"></i>
                         </button>
@@ -363,6 +363,41 @@ input[type="checkbox"] {
 
 @push('scripts')
 <script>
+
+function handleSearch() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const services = {
+        'laundry': ['laundry', 'washing', 'clothes', 'dry cleaning', 'ironing'],
+        'gardening': ['garden', 'plant', 'lawn', 'gardening', 'landscaping'],
+        'cleaning': ['cleaning', 'house cleaning', 'clean', 'housekeeping', 'healthy']
+    };
+
+    let foundService = null;
+    
+    // Check which service matches the search term
+    for (const [service, keywords] of Object.entries(services)) {
+        if (keywords.some(keyword => searchTerm.includes(keyword))) {
+            foundService = service;
+            break;
+        }
+    }
+
+    // Show the corresponding service section
+    if (foundService) {
+        showProviders(foundService);
+        // Scroll to providers section
+        document.getElementById('providersSection').scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+// Add event listener for Enter key
+document.getElementById('searchInput').addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+        handleSearch();
+    }
+});
+
+
 function updateLocation() {
     if (!navigator.geolocation) {
         alert("Geolocation is not supported by this browser.");
