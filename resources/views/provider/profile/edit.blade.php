@@ -121,6 +121,55 @@ label {
     background: #ffffff !important;
     border-bottom: 1px solid #e8e8e8;
 }
+
+/* Profile picture upload styles */
+.profile-upload-box {
+    width: 150px;
+    height: 150px;
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.profile-input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.profile-label {
+    width: 100%;
+    height: 100%;
+    border: 2px dashed #1E856D;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #ffffff;
+}
+
+.profile-label:hover {
+    border-color: #156952;
+    background: #f8f9fa;
+}
+
+.upload-icon {
+    font-size: 2rem;
+    color: #1E856D;
+    margin-bottom: 0.5rem;
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
 </style>
 @endpush
 
@@ -133,15 +182,15 @@ label {
                     <h5 class="title">Edit Profile</h5>
                 </div>
                 <div class="card-body">
-                    @if(session('success'))
-                        <div class="alert alert-success">
-                            {{ session('success') }}
-                        </div>
-                    @endif
-
                     @if(session('error'))
                         <div class="alert alert-danger">
                             {{ session('error') }}
+                        </div>
+                    @endif
+
+                    @if(session('success'))
+                        <div class="alert alert-success">
+                            {{ session('success') }}
                         </div>
                     @endif
 
@@ -151,12 +200,26 @@ label {
                         <!-- Profile Picture -->
                         <div class="form-group">
                             <label>Profile Picture</label>
-                            <input type="file" name="profile_picture" class="form-control @error('profile_picture') is-invalid @enderror" accept="image/*">
+                            <div class="profile-upload-box">
+                                <input type="file" name="profile_picture" id="profile_picture" class="profile-input @error('profile_picture') is-invalid @enderror" accept="image/*" onchange="console.log('File selected:', this.files[0])">
+                                <label for="profile_picture" class="profile-label">
+                                    @if($provider->profile_picture)
+                                        <img src="{{ asset('storage/' . $provider->profile_picture) }}" alt="Current Profile Picture" class="preview-image">
+                                    @else
+                                        <div class="upload-icon">
+                                            <i class="tim-icons icon-simple-add"></i>
+                                        </div>
+                                        <span>Upload Photo</span>
+                                    @endif
+                                </label>
+                            </div>
                             @error('profile_picture')
-                                <span class="invalid-feedback">{{ $message }}</span>
+                                <span class="invalid-feedback d-block">{{ $message }}</span>
                             @enderror
-                            @if($provider->profile_picture)
-                                <img src="{{ asset('storage/' . $provider->profile_picture) }}" alt="Current Profile Picture" class="mt-2" style="max-width: 200px">
+                            @if(session('error'))
+                                <div class="alert alert-danger mt-2">
+                                    {{ session('error') }}
+                                </div>
                             @endif
                         </div>
 
@@ -235,13 +298,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn btn-danger remove-payment">Remove</button>
             </div>
         `;
-        paymentMethodsDiv.insertBefore(newInput, this.parentElement.parentElement);
+        // Insert before the "Add payment method" input group
+        const lastInput = paymentMethodsDiv.querySelector('.input-group:last-child');
+        paymentMethodsDiv.insertBefore(newInput, lastInput);
     });
     
-    // Remove payment method field
-    paymentMethodsDiv.addEventListener('click', function(e) {
-        if (e.target.classList.contains('remove-payment')) {
-            e.target.closest('.input-group').remove();
+    // Remove payment method field - using event delegation
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.matches('.remove-payment, .remove-payment *')) {
+            const button = e.target.closest('.remove-payment');
+            if (button) {
+                const inputGroup = button.closest('.input-group');
+                if (inputGroup) {
+                    inputGroup.remove();
+                }
+            }
+        }
+    });
+
+    const input = document.getElementById('profile_picture');
+    const label = document.querySelector('.profile-label');
+    
+    input.addEventListener('change', function(e) {
+        console.log('File input change event:', this.files);
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                label.innerHTML = `<img src="${e.target.result}" alt="Profile Preview" class="preview-image">`;
+            }
+            
+            reader.readAsDataURL(this.files[0]);
         }
     });
 });

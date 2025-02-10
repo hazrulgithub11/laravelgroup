@@ -314,28 +314,14 @@ td, th {
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <h6>Services</h6>
+                        <h6>Service Categories</h6>
                         <ul class="list-unstyled mb-3">
-                            @if($order->washing)
-                                <li><i class="tim-icons icon-check-2 text-success"></i> Washing</li>
-                            @endif
-                            @if($order->ironing)
-                                <li><i class="tim-icons icon-check-2 text-success"></i> Ironing</li>
-                            @endif
-                            @if($order->dry_cleaning)
-                                <li><i class="tim-icons icon-check-2 text-success"></i> Dry Cleaning</li>
-                            @endif
+                            @foreach($order->provider->categories as $category)
+                                <li><i class="tim-icons icon-check-2 text-success"></i> {{ $category }}</li>
+                            @endforeach
                         </ul>
-
-                        <h6>Load Size</h6>
-                        <p>
-                            @if($order->extra_load_small)
-                                11-20 pieces
-                            @elseif($order->extra_load_large)
-                                20+ pieces
-                            @else
-                                1-10 pieces
-                            @endif
+                        <p class="text-muted">
+                            Service Cost: RM {{ number_format(count($order->provider->categories) * 10, 2) }}
                         </p>
                     </div>
                     <div class="col-md-6">

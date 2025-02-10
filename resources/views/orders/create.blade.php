@@ -2,6 +2,128 @@
 
 @section('title', $order ? 'Edit Order' : 'Create Order')
 
+@push('css')
+<style>
+/* Override theme colors */
+body, .wrapper, .main-panel, .content {
+    background: #ffffff !important;
+    color: #000000 !important;
+}
+
+.card {
+    background: #ffffff;
+    border: 1px solid #e8e8e8;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.card-title {
+    color: #000000 !important;
+    font-weight: 600;
+}
+
+/* Form styles */
+.form-control {
+    border: 1px solid #e8e8e8;
+    color: #000000 !important;
+    background: #ffffff !important;
+}
+
+.form-control:focus {
+    border-color: #1E856D;
+}
+
+label {
+    color: #000000 !important;
+    font-weight: 500;
+}
+
+/* Alert styles */
+.alert-info {
+    background: #f8f9fa !important;
+    border: 1px solid #e8e8e8;
+    color: #000000 !important;
+}
+
+.alert-primary {
+    background: #f8f9fa !important;
+    border: 1px solid #e8e8e8;
+    color: #000000 !important;
+}
+
+/* Button styles */
+.btn-primary {
+    background: #1E856D !important;
+    border: none;
+}
+
+.btn-secondary {
+    background: #6c757d !important;
+    border: none;
+}
+
+/* Badge styles */
+.badge {
+    padding: 0.5em 1em;
+}
+
+.badge-primary {
+    background: #1E856D !important;
+}
+
+/* Icon colors */
+.tim-icons {
+    color: #1E856D !important;
+}
+
+/* List styles */
+.list-unstyled {
+    color: #000000 !important;
+}
+
+/* Price and cost displays */
+#delivery-charge,
+#service-cost,
+#total-categories,
+#total {
+    color: #000000 !important;
+    font-weight: 500;
+}
+
+/* Select dropdown */
+select.form-control {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+}
+
+select.form-control option {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+}
+
+/* Input group */
+.input-group-text {
+    background-color: #f8f9fa;
+    border: 1px solid #e8e8e8;
+    color: #000000;
+}
+
+/* Error messages */
+.invalid-feedback {
+    color: #dc3545 !important;
+}
+
+/* Distance and provider info */
+#provider-distance {
+    color: #000000 !important;
+}
+
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -26,6 +148,7 @@
                                 @foreach($providers as $provider)
                                     <option value="{{ $provider->id }}" 
                                             data-distance="{{ $provider->distance ?? 'N/A' }}"
+                                            data-categories="{{ json_encode($provider->categories) }}"
                                             {{ ($order ? $order->provider_id : $selectedProviderId) == $provider->id ? 'selected' : '' }}>
                                         {{ $provider->name }} 
                                         @if(isset($provider->distance))
@@ -54,9 +177,9 @@
                                 <hr>
                                 <small>
                                     <ul class="mb-0">
-                                        <li>0-5 km: RM 3.00</li>
-                                        <li>5-10 km: RM 5.00</li>
-                                        <li>10-15 km: RM 8.00</li>
+                                    <li style="color: #000000; font-weight: 500;">0-5 km: RM 3.00</li>
+                                    <li style="color: #000000; font-weight: 500;">5-10 km: RM 5.00</li>
+                                    <li style="color: #000000; font-weight: 500;">10-15 km: RM 8.00</li>
                                     </ul>
                                 </small>
                             </div>
@@ -64,83 +187,29 @@
                         </div>
 
                         <div class="form-group mb-4">
-                            <label class="d-block mb-3">Select Services</label>
+                            <label class="d-block mb-3">Service Categories</label>
                             <div class="alert alert-info">
                                 <i class="tim-icons icon-alert-circle-exc"></i>
-                                One load = 10 pieces of clothing
+                                Each service category costs RM 10
                             </div>
-                            <div class="custom-control custom-checkbox mb-2">
-                                <input type="checkbox" class="custom-control-input service-checkbox" 
-                                       id="washing" name="washing" value="1"
-                                       data-price="10"
-                                       {{ $order && $order->washing ? 'checked' : '' }}>
-                                <label class="custom-control-label" for="washing">
-                                    Washing (RM 10 per load)
-                                </label>
+                            
+                            <div id="provider-categories" class="mb-3">
+                                <!-- Categories will be populated dynamically -->
                             </div>
-                            <div class="custom-control custom-checkbox mb-2">
-                                <input type="checkbox" class="custom-control-input service-checkbox" 
-                                       id="ironing" name="ironing" value="1"
-                                       data-price="8"
-                                       {{ $order && $order->ironing ? 'checked' : '' }}>
-                                <label class="custom-control-label" for="ironing">
-                                    Ironing (RM 8 per load)
-                                </label>
+                            
+                            <div class="alert alert-primary">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Total Service Categories:</span>
+                                    <span id="total-categories">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Service Cost:</span>
+                                    <span id="service-cost">RM 0.00</span>
+                                </div>
                             </div>
-                            <div class="custom-control custom-checkbox mb-2">
-                                <input type="checkbox" class="custom-control-input service-checkbox" 
-                                       id="dry_cleaning" name="dry_cleaning" value="1"
-                                       data-price="15"
-                                       {{ $order && $order->dry_cleaning ? 'checked' : '' }}>
-                                <label class="custom-control-label" for="dry_cleaning">
-                                    Dry Cleaning (RM 15 per load)
-                                </label>
-                            </div>
-                            @error('services')
-                                <span class="invalid-feedback d-block">{{ $message }}</span>
-                            @enderror
                         </div>
 
-                        <div class="form-group mb-4" id="extraLoadSection" style="display: none;">
-                            <label class="d-block mb-3">Additional Clothes</label>
-                            <div class="alert alert-warning">
-                                <ul class="mb-0">
-                                    <li>Base price includes first 10 pieces</li>
-                                    <li>1-10 additional pieces: +RM 15</li>
-                                    <li>More than 10 additional pieces: +RM 25</li>
-                                </ul>
-                            </div>
-                            
-                            <div class="custom-control custom-radio mb-2">
-                                <input type="radio" class="custom-control-input load-radio" 
-                                       id="no_extra" name="extra_load" value="none" checked
-                                       data-price="0"
-                                       {{ $order && $order->extra_load === 'none' ? 'checked' : '' }}>
-                                <label class="custom-control-label" for="no_extra">
-                                    No additional clothes (1-10 pieces)
-                                </label>
-                            </div>
-                            
-                            <div class="custom-control custom-radio mb-2">
-                                <input type="radio" class="custom-control-input load-radio" 
-                                       id="extra_small" name="extra_load" value="small"
-                                       data-price="15"
-                                       {{ $order && $order->extra_load === 'small' ? 'checked' : '' }}>
-                                <label class="custom-control-label" for="extra_small">
-                                    11-20 pieces (+RM 15)
-                                </label>
-                            </div>
-                            
-                            <div class="custom-control custom-radio mb-2">
-                                <input type="radio" class="custom-control-input load-radio" 
-                                       id="extra_large" name="extra_load" value="large"
-                                       data-price="25"
-                                       {{ $order && $order->extra_load === 'large' ? 'checked' : '' }}>
-                                <label class="custom-control-label" for="extra_large">
-                                    More than 20 pieces (+RM 25)
-                                </label>
-                            </div>
-                        </div>
+                        
 
                         <div class="form-group mb-4">
                             <label class="d-block mb-3">Pickup & Delivery Location</label>
@@ -227,14 +296,14 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const checkboxes = document.querySelectorAll('.service-checkbox');
-    const loadRadios = document.querySelectorAll('.load-radio');
-    const totalInput = document.getElementById('total');
-    const extraLoadSection = document.getElementById('extraLoadSection');
     const providerSelect = document.getElementById('provider_id');
     const providerDistanceSpan = document.getElementById('provider-distance');
     const deliveryChargeSpan = document.getElementById('delivery-charge');
     const deliveryChargeInput = document.getElementById('delivery-charge-input');
+    const categoriesDiv = document.getElementById('provider-categories');
+    const totalCategoriesSpan = document.getElementById('total-categories');
+    const serviceCostSpan = document.getElementById('service-cost');
+    const totalInput = document.getElementById('total');
 
     function calculateDeliveryCharge(distance) {
         if (!distance || distance === 'N/A') return 0;
@@ -249,7 +318,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (distance <= 15) {
             charge = 8;
         } else {
-            // For distances > 15km, you might want to show an error or handle differently
             charge = 8;
         }
 
@@ -270,53 +338,50 @@ document.addEventListener('DOMContentLoaded', function() {
             deliveryChargeSpan.textContent = 'RM 0.00';
             deliveryChargeInput.value = 0;
         }
-        
-        calculateTotal();
+
+        // Update categories and total after delivery info is updated
+        updateCategories();
     }
 
-    function calculateTotal() {
-        let baseTotal = 0;
-        let hasServices = false;
-
-        // Calculate services total
-        checkboxes.forEach(checkbox => {
-            if (checkbox.checked) {
-                hasServices = true;
-                baseTotal += parseFloat(checkbox.dataset.price);
-            }
-        });
-
-        // Show/hide extra load section
-        extraLoadSection.style.display = hasServices ? 'block' : 'none';
-
-        // Add extra load cost
-        if (hasServices) {
-            const selectedLoad = document.querySelector('input[name="extra_load"]:checked');
-            if (selectedLoad) {
-                baseTotal += parseFloat(selectedLoad.dataset.price);
-            }
+    function updateCategories() {
+        const selectedOption = providerSelect.options[providerSelect.selectedIndex];
+        if (!selectedOption.value) {
+            categoriesDiv.innerHTML = '<p class="text-muted">Please select a provider</p>';
+            totalCategoriesSpan.textContent = '0';
+            serviceCostSpan.textContent = 'RM 0.00';
+            calculateTotal(0);
+            return;
         }
 
-        // Add delivery charge
-        baseTotal += parseFloat(deliveryChargeInput.value);
+        // Get provider categories from data attribute
+        const categories = JSON.parse(selectedOption.dataset.categories || '[]');
+        
+        // Display categories
+        categoriesDiv.innerHTML = categories.map(category => `
+            <div class="badge badge-primary mr-2 mb-2">${category}</div>
+        `).join('');
 
-        totalInput.value = baseTotal.toFixed(2);
+        // Update counts and costs
+        const categoryCount = categories.length;
+        const serviceCost = categoryCount * 10; // RM10 per category
+        
+        totalCategoriesSpan.textContent = categoryCount;
+        serviceCostSpan.textContent = `RM ${serviceCost.toFixed(2)}`;
+        
+        calculateTotal(serviceCost);
     }
 
-    // Add event listeners
+    function calculateTotal(serviceCost) {
+        const deliveryCharge = parseFloat(deliveryChargeInput.value) || 0;
+        const total = serviceCost + deliveryCharge;
+        totalInput.value = total.toFixed(2);
+    }
+
+    // Add event listener
     providerSelect.addEventListener('change', updateDeliveryInfo);
-    
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', calculateTotal);
-    });
 
-    loadRadios.forEach(radio => {
-        radio.addEventListener('change', calculateTotal);
-    });
-
-    // Initial calculations
+    // Initial calculation
     updateDeliveryInfo();
-    calculateTotal();
 });
 
 function getCurrentLocation() {

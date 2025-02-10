@@ -32,64 +32,70 @@ class OrderController extends Controller
 
     public function create(Request $request, Order $order = null)
     {
-        // Get all providers with distances if user location is available
-        $providers = Provider::all();
-        
-        if (session('user_latitude') && session('user_longitude')) {
-            foreach ($providers as $provider) {
-                $provider->distance = $this->calculateDistance(
-                    session('user_latitude'),
-                    session('user_longitude'),
-                    $provider->latitude,
-                    $provider->longitude
-                );
-            }
-            // Sort providers by distance
-            $providers = $providers->sortBy('distance');
-        }
-        
+        $providers = Provider::all()->map(function($provider) {
+            // If categories is already an array, don't decode it
+            $provider->categories = is_string($provider->categories) 
+                ? json_decode($provider->categories, true) 
+                : ($provider->categories ?? []);
+            return $provider;
+        });
+
         // Get the pre-selected provider if provided
         $selectedProviderId = $request->query('provider_id');
+        $serviceType = $request->query('service_type');
         
-        return view('orders.create', compact('providers', 'selectedProviderId', 'order'));
+        // Define categories and prices based on service type
+        $categories = $this->getServiceCategories($serviceType);
+        
+        return view('orders.create', compact('providers', 'selectedProviderId', 'order', 'serviceType', 'categories'));
+    }
+
+    /**
+     * Get service categories and prices based on service type
+     */
+    private function getServiceCategories($type)
+    {
+        // Define your service categories and prices
+        $categories = [
+            'laundry' => [
+                ['id' => 'basic', 'name' => 'Basic Wash', 'price' => 30],
+                ['id' => 'premium', 'name' => 'Premium Wash', 'price' => 45],
+                ['id' => 'deluxe', 'name' => 'Deluxe Package', 'price' => 60],
+                ['id' => 'express', 'name' => 'Express Service', 'price' => 75],
+            ],
+            'garden' => [
+                ['id' => 'basic', 'name' => 'Basic Maintenance', 'price' => 50],
+                ['id' => 'premium', 'name' => 'Premium Care', 'price' => 80],
+                ['id' => 'deluxe', 'name' => 'Full Garden Service', 'price' => 120],
+                ['id' => 'express', 'name' => 'Emergency Service', 'price' => 150],
+            ],
+            'cleaning' => [
+                ['id' => 'basic', 'name' => 'Basic Cleaning', 'price' => 40],
+                ['id' => 'premium', 'name' => 'Deep Cleaning', 'price' => 70],
+                ['id' => 'deluxe', 'name' => 'Full House Service', 'price' => 100],
+                ['id' => 'express', 'name' => 'Same Day Service', 'price' => 130],
+            ],
+        ];
+        
+        return $categories[$type] ?? [];
     }
 
     public function store(Request $request)
     {
-        // Add validation rules for new fields
         $validated = $request->validate([
             'provider_id' => 'required|exists:providers,id',
-            'total' => 'required|numeric|min:0',
-            'washing' => 'boolean',
-            'ironing' => 'boolean',
-            'dry_cleaning' => 'boolean',
-            'extra_load' => 'required|in:none,small,large',
             'address' => 'required|string',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'pickup_time' => 'required|date|after:now',
-            'delivery_time' => 'required|date|after:pickup_time|after:24_hours_from_pickup',
+            'delivery_time' => 'required|date|after:pickup_time',
             'delivery_charge' => 'required|numeric|min:0',
-        ], [
-            'delivery_time.after' => 'Delivery time must be at least 24 hours after pickup time'
+            'total' => 'required|numeric|min:0',
         ]);
-        
-        // Ensure at least one service is selected
-        if (!($validated['washing'] || $validated['ironing'] || $validated['dry_cleaning'])) {
-            return back()
-                ->withInput()
-                ->withErrors(['services' => 'Please select at least one service']);
-        }
 
-        // Create the order with additional fields
         $order = Order::create([
             'user_id' => auth()->id(),
             'provider_id' => $validated['provider_id'],
-            'washing' => $request->boolean('washing'),
-            'ironing' => $request->boolean('ironing'),
-            'dry_cleaning' => $request->boolean('dry_cleaning'),
-            'extra_load_small' => $request->input('extra_load') === 'small' ? 1 : 0,
-            'extra_load_large' => $request->input('extra_load') === 'large' ? 1 : 0,
             'total' => $validated['total'],
             'status' => 'pending',
             'address' => $validated['address'],

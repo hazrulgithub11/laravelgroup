@@ -17,78 +17,68 @@ class ProfileController extends Controller
 
     public function update(Request $request)
     {
-        $provider = Auth::guard('provider')->user();
-        
-        $request->validate([
-            'profile_picture' => 'nullable|image|max:2048',
-            'introduction' => 'required|string|max:1000',
-            'years_experience' => 'required|integer|min:0',
-            'payment_methods' => 'required|array',
-            'payment_methods.*' => 'required|string'
+        \Log::info('Update request received', [
+            'has_file' => $request->hasFile('profile_picture'),
+            'all_files' => $request->allFiles(),
+            'content_type' => $request->header('Content-Type')
         ]);
 
-        try {
-            if ($request->hasFile('profile_picture')) {
-                $file = $request->file('profile_picture');
-                
-                // Debug file information
-                \Log::info('Uploading file:', [
-                    'original_name' => $file->getClientOriginalName(),
-                    'size' => $file->getSize(),
-                    'mime' => $file->getMimeType(),
-                    'storage_path' => storage_path('app/public/profiles'),
-                    'public_path' => public_path('storage/profiles')
-                ]);
+        $provider = auth()->guard('provider')->user();
+        
+        $request->validate([
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'introduction' => 'required|string|max:500',
+            'years_experience' => 'required|integer|min:0',
+            'payment_methods' => 'required|array|min:1',
+            'payment_methods.*' => 'required|string|max:255',
+        ]);
 
-                // Create a unique filename
-                $filename = time() . '_' . $file->getClientOriginalName();
-                
-                // Ensure directory exists
-                if (!file_exists(storage_path('app/public/profiles'))) {
-                    \Log::info('Creating directory: ' . storage_path('app/public/profiles'));
-                    mkdir(storage_path('app/public/profiles'), 0775, true);
-                }
-
-                // Try to move the file
-                try {
-                    $file->move(storage_path('app/public/profiles'), $filename);
-                    \Log::info('File moved successfully to: ' . storage_path('app/public/profiles/' . $filename));
-                    
-                    // Update database with the path
-                    $provider->profile_picture = 'profiles/' . $filename;
-                    \Log::info('Database path set to: ' . $provider->profile_picture);
-                } catch (\Exception $e) {
-                    \Log::error('File move failed: ' . $e->getMessage());
-                    throw $e;
-                }
-            }
-
-            // Update other fields
-            $provider->introduction = $request->introduction;
-            $provider->years_experience = $request->years_experience;
+        if ($request->hasFile('profile_picture')) {
+            $file = $request->file('profile_picture');
             
-            // Filter out empty payment methods
-            $paymentMethods = array_values(array_filter($request->payment_methods, function($method) {
-                return !empty(trim($method));
-            }));
-            $provider->payment_methods = $paymentMethods;
-            
-            // Save and log the result
-            $saved = $provider->save();
-            \Log::info('Provider save result: ' . ($saved ? 'success' : 'failed'), [
-                'profile_picture' => $provider->profile_picture,
-                'introduction' => $provider->introduction,
-                'years_experience' => $provider->years_experience
+            \Log::info('File details:', [
+                'original_name' => $file->getClientOriginalName(),
+                'temp_path' => $file->getPathname(),
+                'storage_path_exists' => file_exists(storage_path('app/public')),
+                'profiles_path_exists' => file_exists(storage_path('app/public/profiles')),
+                'storage_permissions' => decoct(fileperms(storage_path('app/public'))),
             ]);
 
-            return redirect()->back()->with('success', 'Profile updated successfully!');
-            
-        } catch (\Exception $e) {
-            \Log::error('Profile update error: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            return redirect()->back()
-                ->with('error', 'Failed to update profile: ' . $e->getMessage())
-                ->withInput();
+            try {
+                // Create profiles directory if it doesn't exist
+                $profilesPath = public_path('storage/profiles');
+                if (!file_exists($profilesPath)) {
+                    mkdir($profilesPath, 0775, true);
+                    \Log::info('Created profiles directory at: ' . $profilesPath);
+                }
+
+                // Store with explicit path
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $result = $file->move($profilesPath, $filename);
+                
+                if ($result) {
+                    $provider->profile_picture = 'profiles/' . $filename;
+                    \Log::info('File moved successfully', [
+                        'path' => $profilesPath . '/' . $filename,
+                        'exists' => file_exists($profilesPath . '/' . $filename)
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Upload failed:', [
+                    'error' => $e->getMessage(),
+                    'line' => $e->getLine()
+                ]);
+                return back()->with('error', 'Failed to upload: ' . $e->getMessage());
+            }
         }
+
+        // Update other fields
+        $provider->introduction = $request->introduction;
+        $provider->years_experience = $request->years_experience;
+        $provider->payment_methods = array_filter($request->payment_methods);
+
+        $provider->save();
+
+        return back()->with('success', 'Profile updated successfully.');
     }
 }

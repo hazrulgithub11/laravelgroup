@@ -21,6 +21,49 @@
     <!-- Add any additional CSS -->
     @stack('css')
 
+    <style>
+    /* Sidebar styles */
+    .sidebar {
+        background: #1E856D !important;  /* Green color */
+    }
+
+    .sidebar .sidebar-wrapper {
+        background: #1E856D !important;
+    }
+
+    .sidebar .nav li a {
+        color: #ffffff !important;
+    }
+
+    .sidebar .nav li.active > a,
+    .sidebar .nav li > a:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: #ffffff !important;
+    }
+
+    .sidebar .logo {
+        background: #1E856D !important;
+    }
+
+    .sidebar .logo a {
+        color: #ffffff !important;
+    }
+
+    .sidebar .simple-text {
+        color: #ffffff !important;
+    }
+
+    /* Active menu item */
+    .sidebar .nav li.active > a {
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* Hover effect */
+    .sidebar .nav li > a:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+    </style>
+
 </head>
 
 <body>

@@ -102,7 +102,7 @@
             <div class="card">
                 <div class="card-body">
                     <h3 class="card-title h5 mb-3">Book {{ $provider->name }}</h3>
-                    <a href="{{ route('orders.create', ['provider' => $provider->id]) }}" 
+                    <a href="{{ route('orders.create', ['provider_id' => $provider->id, 'service_type' => $provider->service_type]) }}" 
                        class="btn btn-primary w-100">
                         Book Now
                     </a>
