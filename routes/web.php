@@ -64,6 +64,10 @@ Route::middleware('auth')->group(function () {
     // Make sure this is inside the auth middleware group if you have one
     Route::post('/test-telegram-notification', [TelegramController::class, 'sendTestNotification'])
         ->name('test.telegram.notification');
+
+    // Profile routes
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
 
 // Add this route to test the master layout

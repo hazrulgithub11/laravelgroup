@@ -112,28 +112,25 @@ h1, h2, h3, h4, h5, h6 {
                         </div>
                     @else
                         <div class="alert alert-warning" style="background: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107;">
-                            <h6 class="text-warning mb-3">⚠️ Telegram Not Connected</h6>
+                            <h6 class="text-warning mb-3" style="color: #000000 !important;">⚠️ Telegram Not Connected</h6>
                             
-                            <p class="mb-2">Connect Telegram to receive:</p>
-                            <ul class="mb-3">
-                                <li>Instant order notifications</li>
-                                <li>Customer messages</li>
-                                <li>Service reminders</li>
+                            <p class="mb-2" style="color: #000000;">Connect Telegram to receive:</p>
+                            <ul class="mb-3" style="color: #000000 !important;">
+                                <li style="color: #000000 !important;">Instant order notifications</li>
+                                <li style="color: #000000 !important;">Customer messages</li>
+                                <li style="color: #000000 !important;">Service reminders</li>
                             </ul>
 
-                            <p class="mb-2">Follow these steps to connect:</p>
-                            <ol class="text-left mb-3">
-                                <li>Open Telegram</li>
-                                <li>Search for <a href="https://t.me/LaundrySystem_bot" target="_blank" style="color: #1E856D;">@LaundrySystem_bot</a></li>
-                                <li>Click "Start" or send the /start command</li>
-                                <li>The bot will provide your Chat ID</li>
-                                <li>Update your profile with the provided Chat ID</li>
+                            <p class="mb-2" style="color: #000000;">Follow these steps to connect:</p>
+                            <ol class="text-left mb-3" style="color: #000000 !important;">
+                                <li style="color: #000000 !important;">Open Telegram</li>
+                                <li style="color: #000000 !important;">Search for <a href="https://t.me/LaundrySystem_bot" target="_blank" style="color: #1E856D;">@LaundrySystem_bot</a></li>
+                                <li style="color: #000000 !important;">Click "Start" or send the /start command</li>
+                                <li style="color: #000000 !important;">The bot will provide your Chat ID</li>
+                                <li style="color: #000000 !important;">Update your profile with the provided Chat ID</li>
                             </ol>
 
-                            <a href="{{ route('provider.profile.edit') }}" class="btn btn-sm" 
-                               style="background: #1E856D; color: #ffffff;">
-                                Update Profile
-                            </a>
+                            
                         </div>
                     @endif
                 </div>

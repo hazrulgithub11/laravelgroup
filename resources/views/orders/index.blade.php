@@ -228,8 +228,22 @@ body, .wrapper, .main-panel, .content {
                                             @endforeach
                                         </ul>
                                     </td>
-                                    <td>{{ $order->pickup_time->format('d M Y h:i A') }}</td>
-                                    <td>{{ $order->delivery_time->format('d M Y h:i A') }}</td>
+                                    <td>
+                                        @if($order->created_at)
+                                            {{ $order->created_at->format('d M Y') }}<br>
+                                            <small class="text-muted">{{ $order->created_at->format('h:i A') }}</small>
+                                        @else
+                                            <span class="text-muted">Not set</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($order->updated_at)
+                                            {{ $order->updated_at->format('d M Y') }}<br>
+                                            <small class="text-muted">{{ $order->updated_at->format('h:i A') }}</small>
+                                        @else
+                                            <span class="text-muted">Not set</span>
+                                        @endif
+                                    </td>
                                     <td>
                                         @php
                                             $statusColors = [
